@@ -35,3 +35,10 @@ class Playing(StateMachine):
     off = self.Off()
     self.trans(stand, C, walk, T(5.0), sit, C, off)
 
+class Playing(Task):
+	def run(self):
+		print("testing before Hello world")
+		memory.speech.say('Hello, World')
+		print("testing atfter Hello world")
+		self.finish()
+
