@@ -105,15 +105,90 @@ void ImageProcessor::processFrame(){
   HorizonLine horizon = HorizonLine::generate(iparams_, cmatrix_, 30000);
   vblocks_.robot_vision->horizon = horizon;
   visionLog((30, "Classifying Image", camera_));
-  if(!classifier_->classifyImage(color_table_)) return;
+  if(!classifier_->classifyImage(color_table_)) return; // Segmenting image
   detectBall();
+  detectGoal();
 }
 
 void ImageProcessor::detectBall() {
+
+  int imageX, imageY;
+  if(!findBall(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
+  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
+
+  ball->imageCenterX = imageX;
+  ball->imageCenterY = imageY;
+
+  Position p = cmatrix_.getWorldPosition(imageX, imageY);
+  ball->visionBearing = cmatrix_.bearing(p);
+  ball->visionElevation = cmatrix_.elevation(p);
+  ball->visionDistance = cmatrix_.groundDistance(p);
+
+  ball->seen = true;
+
 }
 
-void ImageProcessor::findBall(int& imageX, int& imageY) {
+void ImageProcessor::detectGoal() {
+
+  int imageX, imageY;
+  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
+  WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
+
+  goal->imageCenterX = imageX;
+  goal->imageCenterY = imageY;
+
+  Position p = cmatrix_.getWorldPosition(imageX, imageY);
+  goal->visionBearing = cmatrix_.bearing(p);
+  goal->visionElevation = cmatrix_.elevation(p);
+  goal->visionDistance = cmatrix_.groundDistance(p);
+
+  goal->seen = true;
+
+}
+
+bool ImageProcessor::findBall(int& imageX, int& imageY) {
   imageX = imageY = 0;
+  unsigned char* segImg = getSegImg();
+  int ct = 0;
+  for (int x=0; x<iparams_.width; x++)
+  {
+    for (int y=0; y<iparams_.width; y++)
+    {
+      if (segImg[iparams_.width * y + x] == c_ORANGE) {
+        imageX += x;
+        imageY += y;
+        ct += 1;
+      }
+    }
+  }
+  imageX /= ct;
+  imageY /= ct;
+  if (ct == 0)
+    return false;
+  return true;
+}
+
+bool ImageProcessor::findGoal(int& imageX, int& imageY) {
+  imageX = imageY = 0;
+  unsigned char* segImg = getSegImg();
+  int ct = 0;
+  for (int x=0; x<iparams_.width; x++)
+  {
+    for (int y=0; y<iparams_.width; y++)
+    {
+      if (segImg[iparams_.width * y + x] == c_BLUE) {
+        imageX += x;
+        imageY += y;
+        ct += 1;
+      }
+    }
+  }
+  imageX /= ct;
+  imageY /= ct;
+  if (ct == 0)
+    return false;
+  return true;
+
 }
 
 int ImageProcessor::getTeamColor() {
