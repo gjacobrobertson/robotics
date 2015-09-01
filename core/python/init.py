@@ -17,6 +17,7 @@ def init():
   print "Python initialized"
 
 def runBehavior(bvr):
+  print bvr
   behavior.load(bvr)
 
 def initMemory():

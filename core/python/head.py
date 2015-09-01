@@ -2,6 +2,11 @@
 from task import Task
 import commands
 import core
+import cfgstiff
+from memory import *
+
+DEG_T_RAD = core.DEG_T_RAD
+RAD_T_DEG = core.RAD_T_DEG
 
 class MoveHead(Task):
   def __init__(self, tilt = None, pan = 0.0, time = 2.0):
@@ -22,8 +27,9 @@ class TrackBall(Task):
     Task.__init__(self)
     
   def run(self):
-    ball = core.world_objects.getObjPtr(core.WO_BALL)
+    ball = world_objects.getObjPtr(core.WO_BALL)
     angle = ball.bearing
+    commands.stand()
     commands.setHeadPan(angle, 0.2)
 
 class ScanForBall(Task):
@@ -32,12 +38,15 @@ class ScanForBall(Task):
     self.seenBallCount = 0
     self.ballCountThreshold = 0;
     self.sign = 1
+    print "Init Scan"
 
   def run(self):
-    
-    if core.joint_values[core.HeadYaw] >= 45 * DEG_T_RAD:
-      sign = -1
-    elif core.joint_values[core.HeadYaw] <= 45 * DEG_T_RAD:
-      sign = 1
-      
-    commands.setHeadPan(sign * 45 * DEG_T_RAD, 2.0)
+    print "Scan!"    
+    if core.joint_values[core.HeadYaw] >= 40 * DEG_T_RAD:
+      self.sign *= -1
+    elif core.joint_values[core.HeadYaw] <= -40 * DEG_T_RAD:
+      self.sign *= -1
+    commands.stand()
+    print "Angle: {0}, Sign: {1}".format(core.joint_values[core.HeadYaw] * RAD_T_DEG,self.sign)
+    commands.setStiffness()
+    commands.setHeadPan(self.sign * 45 * DEG_T_RAD, 2.0)

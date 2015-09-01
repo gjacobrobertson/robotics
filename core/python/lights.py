@@ -112,6 +112,7 @@ def doPlayingEyeLights():
   #doRightEyeSonar()
   #doLeftEyeKicks()
   #doRightEyeKicks()
+  doRightEyeBall()
   doLeftEyeGoal()
 #  pass
 
@@ -150,6 +151,17 @@ def doLeftEyeGoal():
     ledsC.allBottomLeftEye(0,0,1)
   else:
     ledsC.allBottomLeftEye(0,0,0)
+
+def doRightEyeBall():
+  ball = world_objects.getObjPtr(core.WO_BALL)
+  if ball.seen:
+    #print "See ball"
+    ledsC.allTopRightEye(0,1,1)
+    ledsC.allBottomRightEye(0,0,0)
+  else:
+    #print "Did not see ball"
+    ledsC.allTopRightEye(0,0,0)
+    ledsC.allBottomRightEye(0,0,0)
 
 def doRightEyeSonar():
   if not(processed_sonar.sonar_module_enabled_):

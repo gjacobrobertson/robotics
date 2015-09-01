@@ -1,6 +1,12 @@
-import memory, commands, head
+#!/usr/bin/env python
+
+import commands, head, cfgstiff, pose
 from task import Task
 from state_machine import *
+import core
+from memory import *
+
+DEG_T_RAD = core.DEG_T_RAD
 
 class Ready(Task):
   def run(self):
@@ -17,14 +23,17 @@ class Playing(StateMachine):
   class Stand(Node):
     def run(self):
       commands.stand()
+      if self.getTime() > 3.0:
+        self.finish()
+
 
   class BallLostEvent(Event):
-    def __init__(self, event, name=None):
-      super(BallLostEvent, self).__init__()
+    def __init__(self):
+      super(self.__class__, self).__init__()
       self.lostCount = 0;      
 
     def ready(self):
-      ball = core.world_objects.getObjPtr(core.WO_BALL)
+      ball = world_objects.getObjPtr(core.WO_BALL)
       if not ball.seen:
         self.lostCount += 1
       else:
@@ -36,11 +45,11 @@ class Playing(StateMachine):
 
   class BallFoundEvent(Event):
     def __init__(self):
-      super(BallFoundEvent, self).__init__()
+      super(self.__class__,self).__init__()
       self.foundCount = 0
 
     def ready(self):
-      ball = core.world_objects.getObjPtr(core.WO_BALL)
+      ball = world_objects.getObjPtr(core.WO_BALL)
       if ball.seen:
         self.foundCount += 1
       else:
@@ -54,18 +63,20 @@ class Playing(StateMachine):
     def run(self):
       return head.TrackBall()  
   
-  class BallSearch(Node):
-    def run(self):
-      return head.ScanForBall()
+  class BallSearch(TaskNode):
+    def __init__(self, task):
+      self.task = task
+      self.task._parent = self
+      super(TaskNode, self).__init__() 
 
   def setup(self):
     stand = self.Stand()
     lost = self.BallLostEvent()
     found = self.BallFoundEvent()
     track = self.TrackBall()
-    search = self.BallSearch()
+    search = self.BallSearch(head.ScanForBall())
 
-    self.trans(stand, C, search)
+#    self.trans(stand, T(20.0), stand)
     self.trans(search, found, track)
     self.trans(track, lost, search)
     

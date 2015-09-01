@@ -44,7 +44,7 @@ def setHeadTilt(tilt = -22):
 def setHeadPan(target_pos, target_time = 2.0, isChange = None):
   if (isChange == None): isChange = False
   joint_commands.setHeadPan(target_pos, target_time*1000.0, isChange)
-
+  
 def setWalkMode(mode):
   behavior_mem.walk_mode_ = mode
 

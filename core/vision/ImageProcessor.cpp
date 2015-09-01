@@ -150,7 +150,7 @@ bool ImageProcessor::findBall(int& imageX, int& imageY) {
   imageX = imageY = 0;
   unsigned char* segImg = getSegImg();
   int ct = 0;
-  for (int x=0; x<iparams_.width; x++)
+  for (int x=0; x<iparams_.height; x++)
   {
     for (int y=0; y<iparams_.width; y++)
     {
@@ -161,9 +161,13 @@ bool ImageProcessor::findBall(int& imageX, int& imageY) {
       }
     }
   }
+  if (ct == 0)
+    return false;
   imageX /= ct;
   imageY /= ct;
-  if (ct == 0)
+  float count = (float)ct;
+//  std::cout << "Pct: " << count / (iparams_.width * iparams_.height) << std::endl;
+  if (ct < 0.0003 * iparams_.width * iparams_.height)
     return false;
   return true;
 }
@@ -172,7 +176,7 @@ bool ImageProcessor::findGoal(int& imageX, int& imageY) {
   imageX = imageY = 0;
   unsigned char* segImg = getSegImg();
   int ct = 0;
-  for (int x=0; x<iparams_.width; x++)
+  for (int x=0; x<iparams_.height; x++)
   {
     for (int y=0; y<iparams_.width; y++)
     {
@@ -183,10 +187,10 @@ bool ImageProcessor::findGoal(int& imageX, int& imageY) {
       }
     }
   }
-  imageX /= ct;
-  imageY /= ct;
   if (ct == 0)
     return false;
+  imageX /= ct;
+  imageY /= ct;
   return true;
 
 }

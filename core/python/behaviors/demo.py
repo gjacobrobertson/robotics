@@ -40,7 +40,7 @@ class Playing(StateMachine):
 
   class Curve(Node):
     def run(self):
-      commands.setWalkVelocity(0.4,0,0.4)
+      commands.setWalkVelocity(0.3,0,0.2)
 
   class Look(Node):
     def run(self):
