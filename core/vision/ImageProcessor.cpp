@@ -108,6 +108,9 @@ void ImageProcessor::processFrame(){
   if(!classifier_->classifyImage(color_table_)) return; // Segmenting image
   detectBall();
   detectGoal();
+
+//  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
+//  if (vblocks_.frame_info->frame_id - ball->frameLastSeen > 30) ball->seen = false;
 }
 
 void ImageProcessor::detectBall() {
@@ -125,7 +128,7 @@ void ImageProcessor::detectBall() {
   ball->visionDistance = cmatrix_.groundDistance(p);
 
   ball->seen = true;
-
+  ball->frameLastSeen = vblocks_.frame_info->frame_id;
 }
 
 void ImageProcessor::detectGoal() {
@@ -149,7 +152,7 @@ void ImageProcessor::detectGoal() {
 bool ImageProcessor::findBall(int& imageX, int& imageY) {
   imageX = imageY = 0;
   unsigned char* segImg = getSegImg();
-  int ct = 0;
+  float ct = 0;
   for (int x=0; x<iparams_.height; x++)
   {
     for (int y=0; y<iparams_.width; y++)
@@ -165,8 +168,7 @@ bool ImageProcessor::findBall(int& imageX, int& imageY) {
     return false;
   imageX /= ct;
   imageY /= ct;
-  float count = (float)ct;
-//  std::cout << "Pct: " << count / (iparams_.width * iparams_.height) << std::endl;
+//  std::cout << "Pct: " << ct / (iparams_.width * iparams_.height) << std::endl;
   if (ct < 0.0003 * iparams_.width * iparams_.height)
     return false;
   return true;

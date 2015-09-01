@@ -28,9 +28,11 @@ class TrackBall(Task):
     
   def run(self):
     ball = world_objects.getObjPtr(core.WO_BALL)
-    angle = ball.bearing
-    commands.stand()
-    commands.setHeadPan(angle, 0.2)
+    angle = ball.visionBearing
+#    commands.stand()
+    print "Tracking ball: {0}".format(angle)
+    print "In Image: {0}, {1}".format(ball.imageCenterX, ball.imageCenterY)
+    commands.setHeadPanTilt(angle, -24, 0.2)
 
 class ScanForBall(Task):
   def __init__(self):
@@ -44,9 +46,12 @@ class ScanForBall(Task):
     print "Scan!"    
     if core.joint_values[core.HeadYaw] >= 40 * DEG_T_RAD:
       self.sign *= -1
+      self.resetTime()
     elif core.joint_values[core.HeadYaw] <= -40 * DEG_T_RAD:
       self.sign *= -1
-    commands.stand()
+      self.resetTime()
+
+#    commands.stand()
     print "Angle: {0}, Sign: {1}".format(core.joint_values[core.HeadYaw] * RAD_T_DEG,self.sign)
     commands.setStiffness()
     commands.setHeadPan(self.sign * 45 * DEG_T_RAD, 2.0)
