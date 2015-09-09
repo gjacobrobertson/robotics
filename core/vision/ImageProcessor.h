@@ -14,6 +14,7 @@
 #include <math/Pose3D.h>
 
 class BeaconDetector;
+class BlobDetector;
 
 /// @ingroup vision
 class ImageProcessor {
@@ -62,6 +63,7 @@ class ImageProcessor {
     RobotCalibration* calibration_;
     bool enableCalibration_;
     BeaconDetector* beacon_detector_;
+    BlobDetector* blob_detector_;
 };
 
 #endif
