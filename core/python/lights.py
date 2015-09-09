@@ -99,7 +99,7 @@ def doInitialEyeLights():
   doEyeBalls()
   doEyePower()
   doEyeHeat()
-  #doLeftEyeGoal()
+  doRightEyeBall()
 
 def doFinishedEyeLights():
   doEyeBalls()
