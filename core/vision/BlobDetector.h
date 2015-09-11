@@ -11,7 +11,7 @@ class BlobDetector : public ObjectDetector {
       public:
         int start, end;
         char color;
-        Run(int start, char color);
+        Run(int start, int end, char color): start(start), end(end), color(color) { }
     };
     class Blob {
       public:
@@ -21,7 +21,7 @@ class BlobDetector : public ObjectDetector {
     void init(TextLogger* tl) { textlogger = tl; }
     void findBlobs();
   protected:
-    void findRuns(vector<vector<DisjointSet::Node<Run>>>& rows);
+    vector<vector<DisjointSet::Node<Run>>> findRuns();
     vector<DisjointSet::Node<Run>> findRunsInRow(unsigned char *, int);
   private:
     TextLogger* textlogger;
