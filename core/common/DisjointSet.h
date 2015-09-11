@@ -4,15 +4,15 @@
 
 namespace DisjointSet {
   template <class T>
-  class Node: std::enable_shared_from_this<Node<T>> {
+  class Node{
     public:
       T data;
       int rank;
-      std::shared_ptr<Node<T>> parent;
-      Node<T>(T t) : data(t), rank(0), parent(this->shared_from_this()) { }
+      Node<T>* parent;
+      Node<T>(T t) : data(t), rank(0), parent(this) { }
   };
   template <class T>
-  std::shared_ptr<Node<T>> find(std::shared_ptr<Node<T>>);
+  Node<T>* find(Node<T>*);
   template <class T>
-  void merge(std::shared_ptr<Node<T>>, std::shared_ptr<Node<T>>);
+  void merge(Node<T>*, Node<T>*);
 }
