@@ -112,7 +112,7 @@ void ImageProcessor::processFrame(){
   vblocks_.robot_vision->horizon = horizon;
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
-  map<Color, list<BlobDetector::Blob>> blobs = blob_detector_->findBlobs();
+  blob_detector_->findBlobs();
   detectBall();
   detectGoal();
   beacon_detector_->findBeacons();

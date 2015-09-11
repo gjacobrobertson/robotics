@@ -3,20 +3,33 @@
 BlobDetector::BlobDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
 }
 
-map<Color, list<BlobDetector::Blob>> BlobDetector::findBlobs() {
-  map<Color, list<BlobDetector::Blob>> blobs;
-  if(camera_ == Camera::BOTTOM) return blobs;
-  blobs[c_ORANGE] = findBlobs(c_ORANGE);
-  return blobs;
+void BlobDetector::findBlobs() {
+  if(camera_ == Camera::BOTTOM) return;
+  vector<vector<DisjointSet::Node<BlobDetector::Run>>> rows;
+  findRuns(rows);
 }
 
-list<BlobDetector::Blob> BlobDetector::findBlobs(Color c) {
-  list<Blob> blobs;
-  for (int x=0; x < iparams_.height; x++)
-  {
-    for (int y=0; y < iparams_.width; y++)
-    {
+void BlobDetector::findRuns(vector<vector<DisjointSet::Node<BlobDetector::Run>>>& rows) {
+  unsigned char* segImg = vblocks_.image->getImgTop();
+  for (int y=0; y < iparams_.width; y++) {
+    rows.push_back(findRunsInRow(segImg, y));
+  }
+}
+
+vector<DisjointSet::Node<BlobDetector::Run>> BlobDetector::findRunsInRow(unsigned char *segImg, int y) {
+  vector<DisjointSet::Node<BlobDetector::Run>> runs;
+  Run run = new Run(0, 0);
+  bool firstRun = true;
+  for (int x=0; x < iparams_.width; x++) { 
+    char color = segImg[iparams_.width * y + x];
+    if (firstRun) {
+      run = new Run(x, color);
+      firstRun = false;
+    } else if (run->color != color) {
+      run->end = x - 1;
+      runs.push_back(new DisjointSet::Node<BlobDetector::Run>(run));
+      run = new Run(x, color);
     }
   }
-  return blobs;
+  runs.push_back(new DisjointSet::Node<BlobDetector::Run>(run));
 }
