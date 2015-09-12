@@ -12,6 +12,9 @@ template <class T>
 void DisjointSet::merge(DisjointSet::Node<T> *a, DisjointSet::Node<T> *b) {
   a = find(a);
   b = find(b);
+  if (a == b) {
+    return;
+  }
   if (a->rank < b->rank) {
     a->parent = b;
   } else if (a->rank > b->rank) {

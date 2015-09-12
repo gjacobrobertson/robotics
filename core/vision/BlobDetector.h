@@ -23,6 +23,7 @@ class BlobDetector : public ObjectDetector {
   protected:
     vector<vector<DisjointSet::Node<Run>>> findRuns();
     vector<DisjointSet::Node<Run>> findRunsInRow(unsigned char *, int);
+    void mergeRuns(vector<vector<DisjointSet::Node<Run>>>);
   private:
     TextLogger* textlogger;
 };

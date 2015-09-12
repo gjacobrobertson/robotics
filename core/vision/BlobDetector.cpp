@@ -34,3 +34,24 @@ vector<DisjointSet::Node<BlobDetector::Run>> BlobDetector::findRunsInRow(unsigne
   }
   return runs;
 }
+
+void BlobDetector::mergeRuns(vector<vector<DisjointSet::Node<Run>>> rows) {
+  for (int y=1; y<iparams_.height;y++) {
+    auto firstRow = rows[y-1];
+    auto secondRow = rows[y];
+    int i=0;
+    int j=0;
+    while (i < firstRow.size() and j < secondRow.size()) {
+      auto a = firstRow[i];
+      auto b = secondRow[j];
+      if (a.data.color == b.data.color) {
+        DisjointSet::merge(&a, &b);
+      }
+      if (a.data.end < b.data.end) {
+        i++;
+      } else {
+        j++;
+      }
+    } 
+  } 
+}
