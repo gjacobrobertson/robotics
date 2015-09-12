@@ -1,0 +1,21 @@
+#pragma once
+
+#include <memory>
+#include "BlobDetector.h"
+
+//struct Run;
+
+namespace DisjointSet {
+  template <class T>
+  class Node{
+    public:
+      T data;
+      int rank;
+      Node* parent;
+      Node(T t) : data(t), rank(0), parent(this) { }
+  };
+  template <class T>
+  Node<T>* find(Node<T>* node);
+  template <class T>
+  void merge(Node<T>* a, Node<T>* b);
+}

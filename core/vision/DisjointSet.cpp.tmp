@@ -1,4 +1,4 @@
-#include <common/DisjointSet.h>
+#include "DisjointSet.h"
 
 template <class T>
 DisjointSet::Node<T> DisjointSet::find(DisjointSet::Node<T> *node) {

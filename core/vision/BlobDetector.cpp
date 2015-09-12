@@ -1,4 +1,5 @@
-#include <vision/BlobDetector.h>
+#include "BlobDetector.h"
+#include "Node.h"
 
 BlobDetector::BlobDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
 }
@@ -9,8 +10,8 @@ void BlobDetector::findBlobs() {
   mergeRuns(rows);
 }
 
-vector<vector<DisjointSet::Node<BlobDetector::Run>>> BlobDetector::findRuns() {
-  vector<vector<DisjointSet::Node<BlobDetector::Run>>> rows;
+vector<vector<Node>> BlobDetector::findRuns() {
+  vector<vector<Node>> rows;
   unsigned char* segImg = vblocks_.image->getImgTop();
   for (int y=0; y < iparams_.height; y++) {
     rows.push_back(findRunsInRow(segImg, y));
@@ -18,16 +19,16 @@ vector<vector<DisjointSet::Node<BlobDetector::Run>>> BlobDetector::findRuns() {
   return rows;
 }
 
-vector<DisjointSet::Node<BlobDetector::Run>> BlobDetector::findRunsInRow(unsigned char *segImg, int y) {
-  vector<DisjointSet::Node<BlobDetector::Run>> runs;
+vector<Node> BlobDetector::findRunsInRow(unsigned char *segImg, int y) {
+  vector<Node> runs;
   int start = 0;
   char runColor = segImg[iparams_.width * y];
   for (int x=0; x <= iparams_.width; x++) { 
     char color = segImg[iparams_.width * y + x];
     if (runColor != color or x == iparams_.width) {
       int end = x - 1;
-      BlobDetector::Run run(start, end, runColor);
-      DisjointSet::Node<BlobDetector::Run> node(run);
+      Run *run = new Run(start, end, runColor);
+      Node node(run);
       runs.push_back(node);
       start = x;
       runColor = color;
@@ -36,19 +37,19 @@ vector<DisjointSet::Node<BlobDetector::Run>> BlobDetector::findRunsInRow(unsigne
   return runs;
 }
 
-void BlobDetector::mergeRuns(vector<vector<DisjointSet::Node<Run>>> rows) {
+void BlobDetector::mergeRuns(vector<vector<Node>> rows) {
   for (int y=1; y<iparams_.height;y++) {
-    auto firstRow = rows[y-1];
-    auto secondRow = rows[y];
+    vector<Node> firstRow = rows[y-1];
+    vector<Node> secondRow = rows[y];
     int i=0;
     int j=0;
     while (i < firstRow.size() and j < secondRow.size()) {
-      auto a = firstRow[i];
-      auto b = secondRow[j];
-      if (a.data.color == b.data.color) {
-        DisjointSet::merge(&a, &b);
+      Node *a = &firstRow[i];
+      Node *b = &secondRow[j];
+      if (a->data->color == b->data->color) {
+        a->merge(b);
       }
-      if (a.data.end < b.data.end) {
+      if (a->data->end < b->data->end) {
         i++;
       } else {
         j++;
