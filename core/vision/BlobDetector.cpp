@@ -6,6 +6,7 @@ BlobDetector::BlobDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
 void BlobDetector::findBlobs() {
   if(camera_ == Camera::BOTTOM) return;
   auto rows = findRuns();
+  mergeRuns(rows);
 }
 
 vector<vector<DisjointSet::Node<BlobDetector::Run>>> BlobDetector::findRuns() {
