@@ -1,12 +1,13 @@
 #include <vision/BeaconDetector.h>
 #include <memory/TextLogger.h>
+#include "structures/Blob.h"
 
 using namespace Eigen;
 
 BeaconDetector::BeaconDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
 }
 
-void BeaconDetector::findBeacons() {
+void BeaconDetector::findBeacons(vector<Blob*> &blobs) {
   if(camera_ == Camera::BOTTOM) return;
   static map<WorldObjectType,int> heights = {
     { WO_BEACON_YELLOW_BLUE, 300 },

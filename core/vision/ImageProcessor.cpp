@@ -1,6 +1,7 @@
 #include <vision/ImageProcessor.h>
 #include <vision/BeaconDetector.h>
 #include <vision/BlobDetector.h>
+#include "structures/Blob.h"
 #include <iostream>
 
 ImageProcessor::ImageProcessor(VisionBlocks& vblocks, const ImageParams& iparams, Camera::Type camera) :
@@ -105,41 +106,72 @@ void ImageProcessor::processFrame(){
   visionLog(30, "Process Frame camera %i", camera_);
 
   updateTransform();
-  
+//  cout << "Process vision frame" << endl;  
   // Horizon calculation
   visionLog(30, "Calculating horizon line");
   HorizonLine horizon = HorizonLine::generate(iparams_, cmatrix_, 30000);
   vblocks_.robot_vision->horizon = horizon;
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
-  blob_detector_->findBlobs();
-  detectBall();
-  detectGoal();
-  beacon_detector_->findBeacons();
+  vector<Blob*> blobs = blob_detector_->findBlobs(getSegImg());
+  detectBall(blobs);
+  detectGoal(blobs);
+  //beacon_detector_->findBeacons(blobs);
+  for (int i=0; i<blobs.size(); i++)
+    delete blobs[i];
+  blobs.clear();
 }
 
-void ImageProcessor::detectBall() {
-
-  int imageX, imageY;
-  if(!findBall(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
+void ImageProcessor::detectBall(vector<Blob*> &blobs) {
+  //cout << "detectBall: " << blobs.size() << endl;
+  int imageX=0, imageY=0;
+//  if(!findBall(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
   WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
+  ball->seen = false;
+  bool colorMatch, ratioMatch, isLargest, bestRatio, isLargeEnough;
+  float ratio = 0.0;
+  int largestAverage = 0;
+  int minSize = 70;
+  for (int i=0; i<blobs.size(); i++) {
+  //  cout << "Color: " << (int)blobs[i]->color << endl;
+    colorMatch = (int)blobs[i]->color == c_ORANGE;
+    ratioMatch = (blobs[i]->dx / (1.0 * blobs[i]->dy)) >= 0.8 && (blobs[i]->dx / (1.0 * blobs[i]->dy)) <= 1.25;
+    isLargest = blobs[i]->avgWidth > largestAverage;
+    isLargeEnough = blobs[i]->dx * blobs[i]->dy > minSize;
+    bestRatio = abs(1.0 - ratio) >= abs(1.0 - blobs[i]->dx / (1.0*blobs[i]->dy));
+    if (colorMatch && ratioMatch && bestRatio && isLargeEnough) // Check ball Color
+    {
+  //    cout << "ORANGE BLOB FOUND: ";
+  //    blobs[i]->print();
+      ball->seen = true;
+      ball->imageCenterX = blobs[i]->xi + (blobs[i]->dx / 2);
+      ball->imageCenterY = blobs[i]->yi + (blobs[i]->dy / 2);
+      ball->radius = blobs[i]->avgWidth / 2;
+      ball->fromTopCamera = camera_ == Camera::TOP;
+      largestAverage = blobs[i]->avgWidth; // area around blob
+      ratio = blobs[i]->dx / (1.0 * blobs[i]->dy);
+    }  
+  }
 
-  ball->imageCenterX = imageX;
-  ball->imageCenterY = imageY;
-
-  Position p = cmatrix_.getWorldPosition(imageX, imageY);
+  // Hard coded ball location
+//  ball->imageCenterX = iparams_.width / 2;
+//  ball->imageCenterY = iparams_.height / 2;
+//  ball->radius = 100;
+//  ball->fromTopCamera = camera_ == Camera::TOP;//true;
+//  cout << "Ball found: " << ball->imageCenterX <<" "<<ball->imageCenterY <<" "<<ball->radius<<endl;
+  Position p = cmatrix_.getWorldPosition(imageX, imageY,ball->radius);
   ball->visionBearing = cmatrix_.bearing(p);
   ball->visionElevation = cmatrix_.elevation(p);
   ball->visionDistance = cmatrix_.groundDistance(p);
 
-  ball->seen = true;
+//  ball->seen = true;
   ball->frameLastSeen = vblocks_.frame_info->frame_id;
 }
 
-void ImageProcessor::detectGoal() {
+void ImageProcessor::detectGoal(vector<Blob*> &blobs) {
 
-  int imageX, imageY;
-  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
+  int imageX=0, imageY=0;
+//  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
   WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
 
   goal->imageCenterX = imageX;

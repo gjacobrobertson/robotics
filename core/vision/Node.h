@@ -11,9 +11,10 @@ class Node{
       int rank;
       Node* parent;
       Node(Run *t) : data(t), rank(0), parent(this) { }
-
+      ~Node();
 //  template <class T>
-  Node* find();
+  Node* find(int depth);
 //  template <class T>
   void merge(Node* b);
+  void print();
 };

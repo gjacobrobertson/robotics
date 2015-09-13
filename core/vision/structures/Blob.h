@@ -21,11 +21,14 @@ struct Blob {
   float correctPixelRatio;
   bool invalid;
 
+  char color;
+
   // GOAL DETECTION
   int edgeSize;
   int edgeStrength;
 
   Blob() : lpIndex(MAX_BLOB_VISIONPOINTS, 0) { }
+  void print();
 };
 
 /// @ingroup vision

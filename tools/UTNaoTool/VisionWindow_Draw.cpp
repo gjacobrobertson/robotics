@@ -1,7 +1,7 @@
 #include <VisionWindow.h>
 
 #define MIN_PEN_WIDTH 3
-#define IS_RUNNING_CORE (core_ && core_->vision_ && ((UTMainWnd*)parent_)->runCoreRadio->isChecked())
+#define IS_RUNNING_CORE false //(core_ && core_->vision_ && ((UTMainWnd*)parent_)->runCoreRadio->isChecked())
 
 void VisionWindow::redrawImages() {
   if(DEBUG_WINDOW) std::cout << "redrawImages\n";
@@ -219,14 +219,15 @@ void VisionWindow::drawSegmentedImage(ImageWidget *image) {
 }
 
 void VisionWindow::drawBall(ImageWidget* image) {
+
   QPainter painter(image->getImage());
   painter.setPen(QPen(QColor(0, 255, 127), 3));
-  if(IS_RUNNING_CORE) {
+  if(IS_RUNNING_CORE) { // Added ! to force draw ball
     ImageProcessor* processor = getImageProcessor(image);
-
+    std::cout << "Running core" << std::endl;
     BallCandidate* best = processor->getBestBallCandidate();
     if(!best) return;
-
+    
     int r = best->radius;
     painter.drawEllipse(
       (int)best->centerX - r - 1,
@@ -237,6 +238,7 @@ void VisionWindow::drawBall(ImageWidget* image) {
     if(!ball->seen) return;
     if( (ball->fromTopCamera && _widgetAssignments[image] == IMAGE_BOTTOM) ||
         (!ball->fromTopCamera && _widgetAssignments[image] == IMAGE_TOP) ) return;
+    //std::cout << "DrawBall: " << ball->imageCenterX << " " << ball->imageCenterY << " " << ball->radius << std::endl;
     int radius = ball->radius;
     painter.drawEllipse(ball->imageCenterX - radius, ball->imageCenterY - radius, radius * 2, radius * 2);
   }

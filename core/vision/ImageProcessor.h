@@ -12,6 +12,7 @@
 #include <common/RobotCalibration.h>
 #include <vision/structures/BallCandidate.h>
 #include <math/Pose3D.h>
+#include "structures/Blob.h"
 
 class BeaconDetector;
 class BlobDetector;
@@ -39,8 +40,8 @@ class ImageProcessor {
     std::vector<BallCandidate*> getBallCandidates();
     BallCandidate* getBestBallCandidate();
     bool isImageLoaded();
-    void detectBall();
-    void detectGoal();
+    void detectBall(vector<Blob*> &blobs);
+    void detectGoal(vector<Blob*> &blobs);
     bool findBall(int& imageX, int& imageY);
     bool findGoal(int& imageX, int& imageY);
   private:

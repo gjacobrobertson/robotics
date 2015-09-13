@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vision/ObjectDetector.h>
+#include "structures/Blob.h"
 
 class TextLogger;
 
@@ -9,7 +10,7 @@ class BeaconDetector : public ObjectDetector {
  public:
   BeaconDetector(DETECTOR_DECLARE_ARGS);
   void init(TextLogger* tl){ textlogger = tl; }
-  void findBeacons();
+  void findBeacons(vector<Blob*> &blobs);
  private:
   TextLogger* textlogger;
 };
