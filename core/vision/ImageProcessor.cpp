@@ -114,7 +114,7 @@ void ImageProcessor::processFrame(){
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
   vector<Blob*> blobs = blob_detector_->findBlobs(getSegImg());
-  detectBall(blobs);
+  //detectBall(blobs);
   detectGoal(blobs);
   //beacon_detector_->findBeacons(blobs);
   for (int i=0; i<blobs.size(); i++)
@@ -172,18 +172,38 @@ void ImageProcessor::detectGoal(vector<Blob*> &blobs) {
 
   int imageX=0, imageY=0;
 //  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
-  WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
+  WorldObject* goal = &vblocks_.world_object->objects_[WO_BALL];//UNKNOWN_GOAL];
+  int largestBlob = 0;
 
-  goal->imageCenterX = imageX;
-  goal->imageCenterY = imageY;
+  bool colorMatch, isLargest, tooSmall;
+
+  for (int i=0; i<blobs.size(); i++) {
+
+    isLargest = blobs[i]->dx * blobs[i]->dy > largestBlob;
+    colorMatch = blobs[i]->color == c_BLUE;
+    tooSmall = blobs[i]->dx * blobs[i]->dy < 1500;
+
+    if (colorMatch && isLargest && !tooSmall) {
+
+      goal->seen = true;
+      goal->imageCenterX =  blobs[i]->xi + (blobs[i]->dx / 2);
+      goal->imageCenterY = blobs[i]->yi + (blobs[i]->dy / 2);
+      goal->radius = blobs[i]->dx / 2;
+      goal->fromTopCamera = camera_ == Camera::TOP;
+
+      Position p = cmatrix_.getWorldPosition(imageX, imageY);
+      goal->visionBearing = cmatrix_.bearing(p);
+      goal->visionElevation = cmatrix_.elevation(p); 
+      goal->visionDistance = cmatrix_.groundDistance(p);
+      largestBlob = blobs[i]->dx * blobs[i]->dy;
+    }
+  }
+
 
   Position p = cmatrix_.getWorldPosition(imageX, imageY);
   goal->visionBearing = cmatrix_.bearing(p);
   goal->visionElevation = cmatrix_.elevation(p);
   goal->visionDistance = cmatrix_.groundDistance(p);
-
-  goal->seen = true;
-
 }
 
 bool ImageProcessor::findBall(int& imageX, int& imageY) {
