@@ -21,8 +21,8 @@ struct Run{
     color_ct(e - s + 1),
     xi(s),
     xf(e),
-    yi(i),
-    yf(i) {}
+    yi(y),
+    yf(y) {}
 };
 
 class BlobDetector : public ObjectDetector {

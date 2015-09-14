@@ -60,8 +60,8 @@ vector<vector<Node*>> BlobDetector::findRuns(unsigned char* segImg) {
   vector<vector<Node*>> rows;
   //unsigned char* segImg = vblocks_.image->getImgTop();
   unsigned char testImg[25] =   {1,1,3,1,1,
+				 0,1,0,1,0,
 				 0,1,1,1,0,
-				 0,3,1,3,0,
 				 2,1,1,1,2,
 				 2,1,1,1,0};
 //  int dy = 10;

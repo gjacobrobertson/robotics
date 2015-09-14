@@ -17,10 +17,10 @@ void Node::merge(Node *b) {
     a->parent = b;
     b->mergeStats(a);
   } else if (a->rank > b->rank) {
-    b->parent = a
+    b->parent = a;
     a->mergeStats(b); 
   } else {
-    b->parent = a
+    b->parent = a;
     a->rank++;
     a->mergeStats(b);
   }
