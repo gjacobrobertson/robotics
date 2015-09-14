@@ -14,7 +14,15 @@ struct Run{
   char color;
   int xi,xf,yi,yf;
   int color_ct;
-  Run(int s, int e, char c): start(s), end(e), color(c), color_ct(0) {}
+  Run(int s, int e, int y, char c):
+    start(s),
+    end(e),
+    color(c),
+    color_ct(e - s + 1),
+    xi(s),
+    xf(e),
+    yi(i),
+    yf(i) {}
 };
 
 class BlobDetector : public ObjectDetector {

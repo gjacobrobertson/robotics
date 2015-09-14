@@ -10,11 +10,12 @@ class Node{
       Run *data;
       int rank;
       Node* parent;
+
       Node(Run *t) : data(t), rank(0), parent(this) { }
       ~Node();
-//  template <class T>
-  Node* find();
-//  template <class T>
-  void merge(Node* b);
-  void print();
+
+      Node* find();
+      void merge(Node* b);
+      void mergeStats(Node* b);
+      void print();
 };

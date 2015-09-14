@@ -1,61 +1,39 @@
 #include "Node.h"
 
-//template <class T>
 Node* Node::find() {
   if (this != parent) {
     parent = parent->find();
   }
-  //else {
-  //  if (depth > 1) cout << "Depth: " << depth << endl;
-//  }
   return parent;
 }
 
-//template <class T>
 void Node::merge(Node *b) {
-  find();
-  b -> find();
-  if (parent == b->parent) { // Both already in same blob
-   // if (data->end > b->parent->data->xf)
-  //    b->parent->data->xf = data->end;
-//    b->parent->data->color_ct += data->color_ct;
+  Node *a = find();
+  b = b -> find();
+  if (a == b) { // Both already in same blob
     return;
   }
-  if (rank < b->rank) { // Update b
-    if (parent->data->xf > b->parent->data->xf)
-      b->parent->data->xf = parent->data->xf;
-    if (parent->data->xi < b->parent->data->xi)
-      b->parent->data->xi = parent->data->xi;
-    if (parent->data->yf > b->parent->data->yf)
-      b->parent->data->yf = parent->data->yf;
-    if (parent->data->yi < b->parent->data->yi)
-      b->parent->data->yi = parent->data->yi;
-    b->parent->data->color_ct += parent->data->color_ct;
-    parent = b;
-  } else if (rank > b->rank) { // update this
-    if (parent->data->xf < b->parent->data->xf)
-      parent->data->xf = b->parent->data->xf;
-    if (parent->data->xi > b->parent->data->xi)
-      parent->data->xi = b->parent->data->xi;
-    if (b->parent->data->yf > parent->data->yf)
-      parent->data->yf = b->parent->data->yf;
-    if (parent->data->yi > b->parent->data->yi)
-      parent->data->yi = b->parent->data->yi;
-    parent->data->color_ct += b->parent->data->color_ct;
-    b->parent = this;
-  } else { // update this
-    if (parent->data->xf < b->parent->data->xf)
-      parent->data->xf = b->parent->data->xf;
-    if (parent->data->xi > b->parent->data->xi)
-      parent->data->xi = b->parent->data->xi;
-    if (b->parent->data->yf > parent->data->yf)
-      parent->data->yf = b->parent->data->yf;
-    if (parent->data->yi > b->parent->data->yi)
-      parent->data->yi = b->parent->data->yi;
-    parent->data->color_ct += b->parent->data->color_ct;
-    b->parent = this;
-    rank++;
+  if (a->rank < b->rank) {
+    a->parent = b;
+    b->mergeStats(a);
+  } else if (a->rank > b->rank) {
+    b->parent = a
+    a->mergeStats(b); 
+  } else {
+    b->parent = a
+    a->rank++;
+    a->mergeStats(b);
   }
+}
+
+//merge stats from Node *b into this
+void Node::mergeStats(Node *b)
+{
+  data->xi = min(data->xi, b->data->xi);
+  data->xf = max(data->xf, b->data->xf);
+  data->yi = min(data->yi, b->data->yi);
+  data->yf = max(data->yf, b->data->yf);
+  data->color_ct += b->data->color_ct;
 }
 
 Node::~Node()

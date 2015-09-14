@@ -76,7 +76,6 @@ vector<vector<Node*>> BlobDetector::findRuns(unsigned char* segImg) {
 vector<Node*> BlobDetector::findRunsInRow(unsigned char *segImg, int y) {
   vector<Node*> runs;
   int start = 0;
-  //int dx = 10;
   char runColor = segImg[width * y];
   char color;
   for (int x=0; x <= width; x+=dx) { 
@@ -84,18 +83,10 @@ vector<Node*> BlobDetector::findRunsInRow(unsigned char *segImg, int y) {
       color = segImg[width * y + x];
     else
       color = c_UNDEFINED;
-    if (runColor != color){// or x == width) {
+    if (runColor != color){
       int end = x - 1;
-//      if (x == width -1 && runColor == color)
-  //      end = x;
-    //  else if ()
       if (runColor != c_UNDEFINED){
-        Run *run = new Run(start, end, runColor);
-        run->yi = y;
-        run->yf = y;
-        run->xi = start;
-        run->xf = end;
-        run->color_ct += end - start + 1;
+        Run *run = new Run(start, end, y, runColor);
         Node* node = new Node(run);
         runs.push_back(node);
       }
@@ -116,22 +107,11 @@ void BlobDetector::mergeRuns(vector<vector<Node*>> &rows) {
     while (i < firstRow.size() and j < secondRow.size()) {
       Node *a = firstRow[i];
       Node *b = secondRow[j];
-      if (a->data->color == b->data->color && a->data->start <= b->data->end && a->data->end >= b->data->start) {
+      if (a->data->color == b->data->color &&
+          a->data->start <= b->data->end &&
+          a->data->end >= b->data->start)
+      {
         a->merge(b);
-        //if (b->parent != b) {// already has a parent
-          //a->parent = b->parent;
-      //    if (a->data->end > b->parent->data->xf)
-        //    b->parent->data->xf = a->data->end;
-         // b->parent->data->color_ct += a->data->color_ct;
-        //}
-        //else {// does not have a parent
-          //b->parent = a->parent;
-         // if (b->data->end > a->parent->data->xf)
-           // a->parent->data->xf = b->data->end;
-          //if (b->data->start < a->parent->data->xi)
-            //a->parent->data->xi = b->data->start;
-          //a->parent->data->yf = b->data->yi;
-          //a->parent->data->color_ct += b->data->color_ct;
       }
       if (a->data->end < b->data->end) {
         i++;
