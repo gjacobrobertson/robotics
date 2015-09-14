@@ -115,8 +115,8 @@ void ImageProcessor::processFrame(){
   if(!classifier_->classifyImage(color_table_)) return;
   vector<Blob*> blobs = blob_detector_->findBlobs(getSegImg());
   //detectBall(blobs);
-  detectGoal(blobs);
-  //beacon_detector_->findBeacons(blobs);
+  //detectGoal(blobs);
+  beacon_detector_->findBeacons(blobs);
   for (int i=0; i<blobs.size(); i++)
     delete blobs[i];
   blobs.clear();
@@ -172,7 +172,7 @@ void ImageProcessor::detectGoal(vector<Blob*> &blobs) {
 
   int imageX=0, imageY=0;
 //  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
-  WorldObject* goal = &vblocks_.world_object->objects_[WO_BALL];//UNKNOWN_GOAL];
+  WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
   int largestBlob = 0;
 
   bool colorMatch, isLargest, tooSmall;
