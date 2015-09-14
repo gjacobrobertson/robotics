@@ -13,7 +13,7 @@ class Node{
       Node(Run *t) : data(t), rank(0), parent(this) { }
       ~Node();
 //  template <class T>
-  Node* find(int depth);
+  Node* find();
 //  template <class T>
   void merge(Node* b);
   void print();

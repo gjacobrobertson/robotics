@@ -42,12 +42,15 @@ void BeaconDetector::findBeacons(vector<Blob*> &blobs) {
   vector<Blob*> y_candidates;
   vector<Blob*> b_candidates;
   for (int i=0; i< blobs.size(); i++) {
-    if (blobs[i]->color == c_PINK)
-      p_candidates.push_back(blobs[i]);
-    if (blobs[i]->color == c_YELLOW)
-      y_candidates.push_back(blobs[i]);
-    if (blobs[i]->color == c_BLUE)
-      b_candidates.push_back(blobs[i]);
+
+    if (blobs[i]->dx < blobs[i]->dy * 3 && blobs[i]->dy < blobs[i]->dx * 3){
+      if (blobs[i]->color == c_PINK)
+        p_candidates.push_back(blobs[i]);
+      if (blobs[i]->color == c_YELLOW)
+        y_candidates.push_back(blobs[i]);
+      if (blobs[i]->color == c_BLUE)
+        b_candidates.push_back(blobs[i]);
+    }
   }
 
   // Yellow and blue
