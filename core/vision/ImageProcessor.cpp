@@ -1,6 +1,6 @@
 #include <vision/ImageProcessor.h>
 #include <vision/BeaconDetector.h>
-#include <vision/BlobDetector.h>
+#include <vision/RegionDetector.h>
 #include "structures/Blob.h"
 #include <iostream>
 
@@ -10,14 +10,14 @@ ImageProcessor::ImageProcessor(VisionBlocks& vblocks, const ImageParams& iparams
   enableCalibration_ = false;
   classifier_ = new Classifier(vblocks_, vparams_, iparams_, camera_);
   beacon_detector_ = new BeaconDetector(DETECTOR_PASS_ARGS);
-  blob_detector_ = new BlobDetector(DETECTOR_PASS_ARGS);
+  region_detector_ = new RegionDetector(DETECTOR_PASS_ARGS);
 }
 
 void ImageProcessor::init(TextLogger* tl){
   textlogger = tl;
   vparams_.init();
   classifier_->init(tl);
-  blob_detector_->init(tl);
+  region_detector_->init(tl);
   beacon_detector_->init(tl);
 }
 
@@ -106,104 +106,86 @@ void ImageProcessor::processFrame(){
   visionLog(30, "Process Frame camera %i", camera_);
 
   updateTransform();
-//  cout << "Process vision frame" << endl;  
   // Horizon calculation
   visionLog(30, "Calculating horizon line");
   HorizonLine horizon = HorizonLine::generate(iparams_, cmatrix_, 30000);
   vblocks_.robot_vision->horizon = horizon;
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
-  vector<Blob*> blobs = blob_detector_->findBlobs(getSegImg());
-  //detectBall(blobs);
-  //detectGoal(blobs);
-  beacon_detector_->findBeacons(blobs);
-  for (int i=0; i<blobs.size(); i++)
-    delete blobs[i];
-  blobs.clear();
-}
-
-void ImageProcessor::detectBall(vector<Blob*> &blobs) {
-  //cout << "detectBall: " << blobs.size() << endl;
-  int imageX=0, imageY=0;
-//  if(!findBall(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
-  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
-  ball->seen = false;
-  bool colorMatch, ratioMatch, isLargest, bestRatio, isLargeEnough;
-  float ratio = 0.0;
-  int largestAverage = 0;
-  int minSize = 70;
-  for (int i=0; i<blobs.size(); i++) {
-  //  cout << "Color: " << (int)blobs[i]->color << endl;
-    colorMatch = (int)blobs[i]->color == c_ORANGE;
-    ratioMatch = (blobs[i]->dx / (1.0 * blobs[i]->dy)) >= 0.8 && (blobs[i]->dx / (1.0 * blobs[i]->dy)) <= 1.25;
-    isLargest = blobs[i]->avgWidth > largestAverage;
-    isLargeEnough = blobs[i]->dx * blobs[i]->dy > minSize;
-    bestRatio = abs(1.0 - ratio) >= abs(1.0 - blobs[i]->dx / (1.0*blobs[i]->dy));
-    if (colorMatch && ratioMatch && bestRatio && isLargeEnough) // Check ball Color
+  vector<vector<Run*>> regions = region_detector_->findRegions(getSegImg());
+  auto blobs = extractBlobs(regions);
+  detectBall(blobs);
+  detectGoal(blobs);
+  for (auto it=blobs.begin();it!=blobs.end();it++)
+  {
+    for (auto blob=it->second.begin();blob!=it->second.end();blob++)
     {
-  //    cout << "ORANGE BLOB FOUND: ";
-  //    blobs[i]->print();
-      ball->seen = true;
-      ball->imageCenterX = blobs[i]->xi + (blobs[i]->dx / 2);
-      ball->imageCenterY = blobs[i]->yi + (blobs[i]->dy / 2);
-      ball->radius = blobs[i]->avgWidth / 2;
-      ball->fromTopCamera = camera_ == Camera::TOP;
-      largestAverage = blobs[i]->avgWidth; // area around blob
-      ratio = blobs[i]->dx / (1.0 * blobs[i]->dy);
-    }  
-  }
-
-  // Hard coded ball location
-//  ball->imageCenterX = iparams_.width / 2;
-//  ball->imageCenterY = iparams_.height / 2;
-//  ball->radius = 100;
-//  ball->fromTopCamera = camera_ == Camera::TOP;//true;
-//  cout << "Ball found: " << ball->imageCenterX <<" "<<ball->imageCenterY <<" "<<ball->radius<<endl;
-  Position p = cmatrix_.getWorldPosition(imageX, imageY,ball->radius);
-  ball->visionBearing = cmatrix_.bearing(p);
-  ball->visionElevation = cmatrix_.elevation(p);
-  ball->visionDistance = cmatrix_.groundDistance(p);
-
-//  ball->seen = true;
-  ball->frameLastSeen = vblocks_.frame_info->frame_id;
-}
-
-void ImageProcessor::detectGoal(vector<Blob*> &blobs) {
-
-  int imageX=0, imageY=0;
-//  if(!findGoal(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
-  WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
-  int largestBlob = 0;
-
-  bool colorMatch, isLargest, tooSmall;
-
-  for (int i=0; i<blobs.size(); i++) {
-
-    isLargest = blobs[i]->dx * blobs[i]->dy > largestBlob;
-    colorMatch = blobs[i]->color == c_BLUE;
-    tooSmall = blobs[i]->dx * blobs[i]->dy < 1500;
-
-    if (colorMatch && isLargest && !tooSmall) {
-
-      goal->seen = true;
-      goal->imageCenterX =  blobs[i]->xi + (blobs[i]->dx / 2);
-      goal->imageCenterY = blobs[i]->yi + (blobs[i]->dy / 2);
-      goal->radius = blobs[i]->dx / 2;
-      goal->fromTopCamera = camera_ == Camera::TOP;
-
-      Position p = cmatrix_.getWorldPosition(imageX, imageY);
-      goal->visionBearing = cmatrix_.bearing(p);
-      goal->visionElevation = cmatrix_.elevation(p); 
-      goal->visionDistance = cmatrix_.groundDistance(p);
-      largestBlob = blobs[i]->dx * blobs[i]->dy;
+      delete *blob;
     }
   }
+  for (auto row=regions.begin();row!=regions.end();row++)
+  {
+    for (auto run=row->begin();run!=row->end();run++)
+    {
+      delete *run;
+    }
+  }
+  //beacon_detector_->findBeacons(regions);
+}
 
+void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
+  int imageX=0, imageY=0;
+  float aspectRatio;
+  bool aspectRatioMatch;
+  int minSize = 70;
+  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
+  ball->seen = false;
+  vector<Blob*> blobs = blob_map[c_ORANGE];
+  for (auto it=blobs.begin(); it!=blobs.end(); it++) {
+    Blob *blob = *it;
+    if (blob->dx * blob->dy < minSize) return;
+    aspectRatio = blob->dx / (1.0 * blob->dy);
+    aspectRatioMatch = aspectRatio >= 0.8 && aspectRatio <= 1.25;
+    if (aspectRatioMatch)
+    {
+      imageX = blob->xi + (blob->dx / 2);
+      imageY = blob->yi + (blob->dy / 2);
+      ball->seen = true;
+      ball->frameLastSeen = vblocks_.frame_info->frame_id;
+      ball->imageCenterX = imageX;
+      ball->imageCenterY = imageY;
+      ball->fromTopCamera = camera_ == Camera::TOP;
+      Position p = cmatrix_.getWorldPosition(imageX, imageY);
+      ball->visionBearing = cmatrix_.bearing(p);
+      ball->visionElevation = cmatrix_.elevation(p);
+      ball->visionDistance = cmatrix_.groundDistance(p);
+      return;
+    }  
+  }
+}
 
-  Position p = cmatrix_.getWorldPosition(imageX, imageY);
-  goal->visionBearing = cmatrix_.bearing(p);
-  goal->visionElevation = cmatrix_.elevation(p);
-  goal->visionDistance = cmatrix_.groundDistance(p);
+void ImageProcessor::detectGoal(map<char, vector<Blob*>> &blob_map) {
+  int imageX=0, imageY=0;
+  int minSize = 1500;
+  vector<Blob*> blobs = blob_map[c_BLUE];
+  WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
+  goal->seen = false;
+  if (blobs.empty()) return;
+  Blob *blob = blobs[0];
+  if (blob->dx * blob->dy > minSize)
+  {
+    imageX = blob->xi + (blob->dx / 2);
+    imageY = blob->yi + (blob->dy / 2);
+    goal->seen = true;
+    goal->imageCenterX = imageX;
+    goal->imageCenterY = imageY;
+    goal->fromTopCamera = camera_ == Camera::TOP;
+    Position p = cmatrix_.getWorldPosition(imageX, imageY);
+    goal->visionBearing = cmatrix_.bearing(p);
+    goal->visionElevation = cmatrix_.elevation(p); 
+    goal->visionDistance = cmatrix_.groundDistance(p);
+    return;
+  }
 }
 
 bool ImageProcessor::findBall(int& imageX, int& imageY) {
@@ -225,7 +207,6 @@ bool ImageProcessor::findBall(int& imageX, int& imageY) {
     return false;
   imageX /= ct;
   imageY /= ct;
-//  std::cout << "Pct: " << ct / (iparams_.width * iparams_.height) << std::endl;
   if (ct < 0.0003 * iparams_.width * iparams_.height)
     return false;
   return true;
@@ -252,6 +233,37 @@ bool ImageProcessor::findGoal(int& imageX, int& imageY) {
   imageY /= ct;
   return true;
 
+}
+
+map<char, vector<Blob*>> ImageProcessor::extractBlobs(vector<vector<Run*>> &regions)
+{
+  map<char, vector<Blob*>> blobs;
+  for (int i=0; i<regions.size(); i++){
+    for (int j=0; j<regions[i].size(); j++) {
+      Run* run = regions[i][j];
+      if (run-> parent == run){
+        Blob *blob = new Blob();
+        blob->xi = run->xi;
+        blob->xf = run->xf;
+        blob->yi = run->yi;
+        blob->yf = run->yf;
+        blob->dx = (blob->xf - blob->xi) + 1;
+        blob->dy = (blob->yf - blob->yi) + 1;
+        
+        if (blobs.count(run->color) == 0)
+        {
+          vector<Blob*> list;
+          blobs[run->color] = list;
+        }
+        blobs[run->color].push_back(blob); 
+      }
+    }
+  }
+  for (auto it=blobs.begin(); it!=blobs.end(); it++)
+  {
+    sort(it->second.begin(), it->second.end(), sortBlobAreaPredicate);
+  }
+  return blobs;
 }
 
 int ImageProcessor::getTeamColor() {

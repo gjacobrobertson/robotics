@@ -21,8 +21,6 @@ struct Blob {
   float correctPixelRatio;
   bool invalid;
 
-  char color;
-
   // GOAL DETECTION
   int edgeSize;
   int edgeStrength;
