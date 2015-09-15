@@ -154,6 +154,7 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
       ball->frameLastSeen = vblocks_.frame_info->frame_id;
       ball->imageCenterX = imageX;
       ball->imageCenterY = imageY;
+      ball->radius = (blob->dx + blob->dy) / 4;
       ball->fromTopCamera = camera_ == Camera::TOP;
       Position p = cmatrix_.getWorldPosition(imageX, imageY);
       ball->visionBearing = cmatrix_.bearing(p);
