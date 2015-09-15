@@ -136,8 +136,9 @@ void ImageProcessor::processFrame(){
 void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
   int imageX=0, imageY=0;
   float aspectRatio;
-  bool aspectRatioMatch;
+  bool aspectRatioMatch, pixelRatioMatch;
   int minSize = 70;
+  float targetPixelRatio = 3.14 / 4.0;
   WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
   ball->seen = false;
   vector<Blob*> blobs = blob_map[c_ORANGE];
@@ -146,7 +147,8 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
     if (blob->dx * blob->dy < minSize) return;
     aspectRatio = blob->dx / (1.0 * blob->dy);
     aspectRatioMatch = aspectRatio >= 0.8 && aspectRatio <= 1.25;
-    if (aspectRatioMatch)
+    pixelRatioMatch = blob->correctPixelRatio >= targetPixelRatio * 0.8 && blob->correctPixelRatio <= targetPixelRatio * 1.25;
+    if (aspectRatioMatch && pixelRatioMatch)
     {
       imageX = blob->xi + (blob->dx / 2);
       imageY = blob->yi + (blob->dy / 2);
@@ -156,7 +158,7 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
       ball->imageCenterY = imageY;
       ball->radius = (blob->dx + blob->dy) / 4;
       ball->fromTopCamera = camera_ == Camera::TOP;
-      Position p = cmatrix_.getWorldPosition(imageX, imageY);
+      Position p = cmatrix_.getWorldPosition(imageX, imageY, blob->dy);
       ball->visionBearing = cmatrix_.bearing(p);
       ball->visionElevation = cmatrix_.elevation(p);
       ball->visionDistance = cmatrix_.groundDistance(p);
@@ -250,6 +252,7 @@ map<char, vector<Blob*>> ImageProcessor::extractBlobs(vector<vector<Run*>> &regi
         blob->yf = run->yf;
         blob->dx = (blob->xf - blob->xi) + 1;
         blob->dy = (blob->yf - blob->yi) + 1;
+        blob->correctPixelRatio = 2.0 * run->color_ct / (blob->dx * blob->dy);
         
         if (blobs.count(run->color) == 0)
         {
