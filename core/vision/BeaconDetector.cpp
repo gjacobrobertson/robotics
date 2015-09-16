@@ -1,170 +1,106 @@
 #include <vision/BeaconDetector.h>
 #include <memory/TextLogger.h>
-#include "structures/Blob.h"
+#include <vision/RegionDetector.h>
 
 using namespace Eigen;
 
 BeaconDetector::BeaconDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
 }
 
-void BeaconDetector::findBeacons(vector<Blob*> &blobs) {
+void BeaconDetector::findBeacons(vector<vector<Run*>> &regions) {
   if(camera_ == Camera::BOTTOM) return;
+  for (auto row: regions)
+  {
+    for (auto run: row)
+    {
+      if (run->color == c_WHITE && run->parent == run)
+      {
+        checkBeacon(run, regions);
+      }
+    }
+  }
+}
+void BeaconDetector::checkBeacon(Run *run, vector<vector<Run*>> &regions)
+{
+  if (!checkRatio(run)) return;
+  Run* botRing = findRegionAbove(regions, run);
+  if (botRing == NULL || !checkRatio(botRing) || !checkColor(botRing)) return;
+  Run* topRing = findRegionAbove(regions, botRing);
+  if (topRing == NULL || !checkRatio(topRing) || !checkColor(topRing)) return;
+  Run* aboveBeacon = findRegionAbove(regions, topRing);
+  if (aboveBeacon != NULL && checkColor(aboveBeacon)) return;
+  updateWorldObject(botRing, topRing); 
+}
+
+void BeaconDetector::updateWorldObject(Run* botRing, Run* topRing)
+{
   static map<WorldObjectType,int> heights = {
     { WO_BEACON_YELLOW_BLUE, 300 },
+    { WO_BEACON_BLUE_YELLOW, 300},
     { WO_BEACON_YELLOW_PINK, 200 },
     { WO_BEACON_PINK_YELLOW, 200 },
-    { WO_BEACON_BLUE_PINK, 200 }
+    { WO_BEACON_BLUE_PINK, 200 },
+    { WO_BEACON_PINK_BLUE, 200 }
   };
-  static map<WorldObjectType,vector<int>> beacons = {
-    { WO_BEACON_YELLOW_BLUE, { 24, 15, 74, 83} },
-    { WO_BEACON_YELLOW_PINK, { 104, 41, 138, 96 } },
-    { WO_BEACON_PINK_YELLOW, { 187, 38, 212, 90 } },
-    { WO_BEACON_BLUE_PINK, { 246, 36, 268, 86 } }
-  };
+  WorldObjectType beaconType;
+  if (topRing->color == c_YELLOW && botRing->color == c_PINK)
+    beaconType = WO_BEACON_YELLOW_PINK;
+  else if (topRing->color == c_YELLOW && botRing->color == c_BLUE)
+    beaconType = WO_BEACON_YELLOW_BLUE;
+  else if (topRing->color == c_PINK && botRing->color == c_YELLOW)
+    beaconType = WO_BEACON_PINK_YELLOW;
+  else if (topRing->color == c_PINK && botRing->color == c_BLUE)
+    beaconType = WO_BEACON_PINK_BLUE;
+  else if (topRing->color == c_BLUE && botRing->color == c_YELLOW)
+    beaconType = WO_BEACON_BLUE_YELLOW;
+  else if (topRing->color == c_BLUE && botRing->color == c_PINK)
+    beaconType = WO_BEACON_BLUE_PINK;
 
-/*  for(auto beacon : beacons) {
-    auto& object = vblocks_.world_object->objects_[beacon.first];
-    auto box = beacon.second;
-    object.imageCenterX = (box[0] + box[2]) / 2;
-    object.imageCenterY = (box[1] + box[3]) / 2;
-    auto position = cmatrix_.getWorldPosition(object.imageCenterX, object.imageCenterY, heights[beacon.first]);
-    object.visionDistance = cmatrix_.groundDistance(position);
-    object.visionBearing = cmatrix_.bearing(position);
-    object.seen = true;
-    object.fromTopCamera = camera_ == Camera::TOP;
-    visionLog(30, "saw %s at (%i,%i) with calculated distance %2.4f", getName(beacon.first), object.imageCenterX, object.imageCenterY, object.visionDistance);
-  }
-*/
+  WorldObject* beacon = &vblocks_.world_object->objects_[beaconType];
+  int beaconLeft = min(botRing->xi, topRing->xi);
+  int beaconRight = max(botRing->xf, topRing->xf);
+  beacon->seen = true;
+  beacon->frameLastSeen = vblocks_.frame_info->frame_id;
+  beacon->imageCenterX = (beaconLeft + beaconRight) / 2;
+  beacon->imageCenterY =  (topRing->yi + botRing->yf) / 2;
+  beacon->fromTopCamera = true;
+  Position p = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, heights[beaconType]);
+  beacon->visionBearing = cmatrix_.bearing(p);
+  beacon->visionElevation = cmatrix_.elevation(p);
+  beacon->visionDistance = cmatrix_.groundDistance(p);
+}
 
-// Get candidate beacon parts
-// This should not be too strict
-  vector<Blob*> p_candidates;
-  vector<Blob*> y_candidates;
-  vector<Blob*> b_candidates;
-  for (int i=0; i< blobs.size(); i++) {
+bool BeaconDetector::checkRatio(Run* run)
+{
+  int dx = run->xf - run->xi + 1;
+  int dy = run->yf - run->yi + 1;
+  float aspectRatio = 1.0 * dx / dy;
+  return (aspectRatio >= 0.25 && aspectRatio <= 1.5);
+}
 
-    if (blobs[i]->dx < blobs[i]->dy * 3 && blobs[i]->dy < blobs[i]->dx * 3){
-      if (blobs[i]->color == c_PINK)
-        p_candidates.push_back(blobs[i]);
-      if (blobs[i]->color == c_YELLOW)
-        y_candidates.push_back(blobs[i]);
-      if (blobs[i]->color == c_BLUE)
-        b_candidates.push_back(blobs[i]);
+bool BeaconDetector::checkColor(Run* run)
+{
+  return run->color == c_YELLOW || run->color == c_PINK || run->color == c_BLUE;
+}
+
+Run* BeaconDetector::findRegion(vector<vector<Run*>> &regions, int x, int y)
+{
+  if (y < 0 || y/2 >= regions.size()) return NULL;
+  auto row = regions[y/2];
+  for (auto run: row)
+  {
+    if (x >= run->start and x <= run->end){
+      return run->find();
     }
   }
+  return NULL;
+}
 
-  // Yellow and blue
-  for (int i=0; i<y_candidates.size(); i++){
-    for (int j=0; j<b_candidates.size(); j++) {
-      // Do they overlap?
-      if (y_candidates[i]->xf > b_candidates[j]->xi && y_candidates[i]->xi < b_candidates[j]->xf){
-        // Ok, are they close vertically?
-        if (abs(y_candidates[i]->yi - b_candidates[j]->yf) < 10 || abs(y_candidates[i]->yf - b_candidates[j]->yi) < 10) {
-          if (y_candidates[i]->yi + y_candidates[i]->dy / 2 > b_candidates[j]->yi + b_candidates[j]->dy/2) { // Blue over yellow
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_BLUE_YELLOW];
-            beacon->imageCenterX = y_candidates[i]->xi + y_candidates[i]->dy / 2;
-            beacon->imageCenterY = (b_candidates[j]->yi + y_candidates[i]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 300);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-        //    b_candidates[j]->print();
-      //      y_candidates[i]->print();
-    //        cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << y_candidates[i]->yf - b_candidates[j]->yi << endl;
-          }
-          else { // Yellow over blue
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_YELLOW_BLUE];
-            beacon->imageCenterX = y_candidates[i]->xi + y_candidates[i]->dy / 2;
-            beacon->imageCenterY = (y_candidates[i]->yi + b_candidates[j]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 300);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-  //          y_candidates[i]->print();
-//            b_candidates[j]->print();
-            //cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << b_candidates[j]->yf - y_candidates[i]->yi << endl;
-          }          
-        }
-      }
-    }
-  }
-
-  // pink and blue
-  for (int i=0; i<p_candidates.size(); i++){
-    for (int j=0; j<b_candidates.size(); j++) {
-      // Do they overlap?
-      if (p_candidates[i]->xf > b_candidates[j]->xi && p_candidates[i]->xi < b_candidates[j]->xf){
-        // Ok, are they close vertically?
-        if (abs(p_candidates[i]->yi - b_candidates[j]->yf) < 10 || abs(p_candidates[i]->yf - b_candidates[j]->yi) < 10) {
-          if (p_candidates[i]->yi + p_candidates[i]->dy / 2 > b_candidates[j]->yi + b_candidates[j]->dy/2) { // Blue over pinkg
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_BLUE_PINK];
-            beacon->imageCenterX = p_candidates[i]->xi + p_candidates[i]->dy / 2;
-            beacon->imageCenterY = (b_candidates[j]->yi + p_candidates[i]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 200);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-          //  b_candidates[j]->print();
-        //    p_candidates[i]->print();
-      //      cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << p_candidates[i]->yf - b_candidates[j]->yi << endl;
-          }
-          else { // pink over blue
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_PINK_BLUE];
-            beacon->imageCenterX = p_candidates[i]->xi + p_candidates[i]->dy / 2;
-            beacon->imageCenterY = (p_candidates[i]->yi + b_candidates[j]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 200);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-    //        p_candidates[i]->print();
-  //          b_candidates[j]->print();
-//            cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << b_candidates[j]->yf - p_candidates[i]->yi << endl;
-          }
-        }
-      }
-    }
-  }
-
-  // yellow and pink
-  for (int i=0; i<y_candidates.size(); i++){
-    for (int j=0; j<p_candidates.size(); j++) {
-      // Do they overlap?
-      if (y_candidates[i]->xf > p_candidates[j]->xi && y_candidates[i]->xi < p_candidates[j]->xf){
-        // Ok, are they close vertically?
-        if (abs(y_candidates[i]->yi - p_candidates[j]->yf) < 10 || abs(y_candidates[i]->yf - p_candidates[j]->yi) < 10) {
-          if (y_candidates[i]->yi + y_candidates[i]->dy / 2 > p_candidates[j]->yi + p_candidates[j]->dy/2) { // pink over yellow
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_PINK_YELLOW];
-            beacon->imageCenterX = y_candidates[i]->xi + y_candidates[i]->dy / 2;
-            beacon->imageCenterY = (p_candidates[j]->yi + y_candidates[i]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 200);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-        //    p_candidates[j]->print();
-      //      y_candidates[i]->print();
-      //      cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << y_candidates[i]->yf - p_candidates[j]->yi << endl;
-          }
-          else { // Yellow over pink
-            WorldObject* beacon = &vblocks_.world_object->objects_[WO_BEACON_YELLOW_PINK];
-            beacon->imageCenterX = y_candidates[i]->xi + y_candidates[i]->dy / 2;
-            beacon->imageCenterY = (y_candidates[i]->yi + p_candidates[j]->yf) / 2;
-            beacon->seen = true;
-            beacon->fromTopCamera = camera_ == Camera::TOP;
-            auto position = cmatrix_.getWorldPosition(beacon->imageCenterX, beacon->imageCenterY, 200);
-            beacon->visionDistance = cmatrix_.groundDistance(position);
-            beacon->visionBearing = cmatrix_.bearing(position);
-    //        y_candidates[i]->print();
-  //          p_candidates[j]->print();
-//            cout << "Beacon at: " << beacon->imageCenterX << ", " << beacon->imageCenterY << " " << p_candidates[j]->yf - y_candidates[i]->yi << endl;
-          }
-        }
-      }
-    }
-  }
-
+Run* BeaconDetector::findRegionAbove(vector<vector<Run*>> &regions, Run* run)
+{
+  int dx = run->xf - run->xi + 1;
+  int dy = run->yf - run->yi + 1;
+  int xc = run->xi + (dx/2);
+  int yc = run->yi + (dy/2); 
+  return findRegion(regions, xc, yc - dy);
 }

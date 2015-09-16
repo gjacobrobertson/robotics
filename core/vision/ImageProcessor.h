@@ -15,7 +15,8 @@
 #include "structures/Blob.h"
 
 class BeaconDetector;
-class BlobDetector;
+class RegionDetector;
+struct Run;
 
 /// @ingroup vision
 class ImageProcessor {
@@ -40,13 +41,14 @@ class ImageProcessor {
     std::vector<BallCandidate*> getBallCandidates();
     BallCandidate* getBestBallCandidate();
     bool isImageLoaded();
-    void detectBall(vector<Blob*> &blobs);
-    void detectGoal(vector<Blob*> &blobs);
+    void detectBall(map<char, vector<Blob*>> &blobs);
+    void detectGoal(map<char, vector<Blob*>> &blobs);
     bool findBall(int& imageX, int& imageY);
     bool findGoal(int& imageX, int& imageY);
   private:
     int getTeamColor();
     double getCurrentTime();
+    map<char, vector<Blob*>> extractBlobs(vector<vector<Run*>> &regions);
 
     VisionBlocks& vblocks_;
     const ImageParams& iparams_;
@@ -64,7 +66,7 @@ class ImageProcessor {
     RobotCalibration* calibration_;
     bool enableCalibration_;
     BeaconDetector* beacon_detector_;
-    BlobDetector* blob_detector_;
+    RegionDetector* region_detector_;
 };
 
 #endif
