@@ -23,31 +23,12 @@ void BeaconDetector::findBeacons(vector<vector<Run*>> &regions) {
 void BeaconDetector::checkBeacon(Run *run, vector<vector<Run*>> &regions)
 {
   if (!checkRatio(run)) return;
-  cout << "Found Base at (" << run->xi << "," << run->yi << "," << run->xf << "," << run->yf << ")" << endl;
   Run* botRing = findRegionAbove(regions, run);
-  if (botRing)
-  {
-    cout << "Checking ";
-    botRing->print();
-  }
   if (botRing == NULL || !checkRatio(botRing) || !checkColor(botRing)) return;
-  cout << "Found Bottom Ring " << COLOR_NAME(botRing->color) << endl;
   Run* topRing = findRegionAbove(regions, botRing);
-  if (topRing)
-  {
-    cout << "Checking ";
-    topRing->print();
-  }
   if (topRing == NULL || !checkRatio(topRing) || !checkColor(topRing)) return;
-  cout << "Found Top Ring " << COLOR_NAME(topRing->color) << endl;
   Run* aboveBeacon = findRegionAbove(regions, topRing);
-  if (aboveBeacon)
-  {
-    cout << "Checking ";
-    aboveBeacon->print();
-  }
   if (aboveBeacon != NULL && checkColor(aboveBeacon)) return;
-  cout << "Nothing Above" <<endl;
   updateWorldObject(botRing, topRing); 
 }
 
@@ -94,7 +75,6 @@ bool BeaconDetector::checkRatio(Run* run)
   int dx = run->xf - run->xi + 1;
   int dy = run->yf - run->yi + 1;
   float aspectRatio = 1.0 * dx / dy;
-  cout << "Aspect Ratio: " << aspectRatio << endl;
   return (aspectRatio >= 0.25 && aspectRatio <= 1.5);
 }
 
@@ -105,7 +85,6 @@ bool BeaconDetector::checkColor(Run* run)
 
 Run* BeaconDetector::findRegion(vector<vector<Run*>> &regions, int x, int y)
 {
-  cout << "findRegion(" << x << "," << y << ")" << endl;
   if (y < 0 || y/2 >= regions.size()) return NULL;
   auto row = regions[y/2];
   for (auto run: row)
