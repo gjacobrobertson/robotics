@@ -114,9 +114,9 @@ void ImageProcessor::processFrame(){
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
   vector<Blob*> blobs = blob_detector_->findBlobs(getSegImg());
-  //detectBall(blobs);
-  //detectGoal(blobs);
-  beacon_detector_->findBeacons(blobs);
+  detectBall(blobs);
+  detectGoal(blobs);
+  //beacon_detector_->findBeacons(blobs);
   for (int i=0; i<blobs.size(); i++)
     delete blobs[i];
   blobs.clear();
@@ -128,28 +128,30 @@ void ImageProcessor::detectBall(vector<Blob*> &blobs) {
 //  if(!findBall(imageX, imageY)) return; // function defined elsewhere that fills in imageX, imageY by reference
   WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
   ball->seen = false;
-  bool colorMatch, ratioMatch, isLargest, bestRatio, isLargeEnough;
+  bool colorMatch, ratioMatch, isLargest, bestRatio, isLargeEnough, tooFar;
   float ratio = 0.0;
   int largestAverage = 0;
-  int minSize = 70;
+  int minSize = 10;
   for (int i=0; i<blobs.size(); i++) {
   //  cout << "Color: " << (int)blobs[i]->color << endl;
     colorMatch = (int)blobs[i]->color == c_ORANGE;
     ratioMatch = (blobs[i]->dx / (1.0 * blobs[i]->dy)) >= 0.8 && (blobs[i]->dx / (1.0 * blobs[i]->dy)) <= 1.25;
     isLargest = blobs[i]->avgWidth > largestAverage;
     isLargeEnough = blobs[i]->dx * blobs[i]->dy > minSize;
-    bestRatio = abs(1.0 - ratio) >= abs(1.0 - blobs[i]->dx / (1.0*blobs[i]->dy));
-    if (colorMatch && ratioMatch && bestRatio && isLargeEnough) // Check ball Color
+    bestRatio = ratio <= (blobs[i]->dy * 1.0 * blobs[i]->avgWidth) / (1.0 * blobs[i]->dx * blobs[i]->dy);
+    tooFar = blobs[i]->yi < 10 && blobs[i]->dx < 50;
+    if (colorMatch && ratioMatch && bestRatio && isLargeEnough && !tooFar) // Check ball Color
     {
   //    cout << "ORANGE BLOB FOUND: ";
-  //    blobs[i]->print();
+//      blobs[i]->print();
       ball->seen = true;
       ball->imageCenterX = blobs[i]->xi + (blobs[i]->dx / 2);
       ball->imageCenterY = blobs[i]->yi + (blobs[i]->dy / 2);
-      ball->radius = blobs[i]->avgWidth / 2;
+      ball->radius = (blobs[i]->dx + blobs[i]->dy) / 4; // average height and width and divide by 2
       ball->fromTopCamera = camera_ == Camera::TOP;
       largestAverage = blobs[i]->avgWidth; // area around blob
-      ratio = blobs[i]->dx / (1.0 * blobs[i]->dy);
+      ratio = (blobs[i]->dy*blobs[i]->avgWidth) / (1.0 * blobs[i]->dx * blobs[i]->dy);
+      //cout << ratio << endl;
     }  
   }
 
@@ -191,7 +193,7 @@ void ImageProcessor::detectGoal(vector<Blob*> &blobs) {
       goal->radius = blobs[i]->dx / 2;
       goal->fromTopCamera = camera_ == Camera::TOP;
 
-      Position p = cmatrix_.getWorldPosition(imageX, imageY);
+      Position p = cmatrix_.getWorldPosition(imageX, imageY, blobs[i]->dy);
       goal->visionBearing = cmatrix_.bearing(p);
       goal->visionElevation = cmatrix_.elevation(p); 
       goal->visionDistance = cmatrix_.groundDistance(p);

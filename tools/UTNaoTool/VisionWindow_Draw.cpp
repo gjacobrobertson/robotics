@@ -1,7 +1,7 @@
 #include <VisionWindow.h>
 
 #define MIN_PEN_WIDTH 3
-#define IS_RUNNING_CORE false //(core_ && core_->vision_ && ((UTMainWnd*)parent_)->runCoreRadio->isChecked())
+#define IS_RUNNING_CORE (core_ && core_->vision_ && ((UTMainWnd*)parent_)->runCoreRadio->isChecked())
 
 void VisionWindow::redrawImages() {
   if(DEBUG_WINDOW) std::cout << "redrawImages\n";
@@ -72,6 +72,7 @@ void VisionWindow::updateBigImage() {
     drawSegmentedImage(bigImage);
     if (overlayCheck->isChecked()) {
       drawBall(bigImage);
+      drawGoal(bigImage);
       drawBallCands(bigImage);
       drawBeacons(bigImage);
     }
@@ -98,10 +99,12 @@ void VisionWindow::redrawImages(ImageWidget* rawImage, ImageWidget* segImage, Im
   // if overlay is on, then draw objects on the raw and seg image as well
   if (overlayCheck->isChecked()) {
     drawBall(rawImage);
+    drawGoal(rawImage);
     drawBallCands(rawImage);
     drawBeacons(rawImage);
 
     drawBall(segImage);
+    drawGoal(segImage);
     drawBallCands(segImage);
     drawBeacons(segImage);
   }
@@ -241,6 +244,38 @@ void VisionWindow::drawBall(ImageWidget* image) {
     //std::cout << "DrawBall: " << ball->imageCenterX << " " << ball->imageCenterY << " " << ball->radius << std::endl;
     int radius = ball->radius;
     painter.drawEllipse(ball->imageCenterX - radius, ball->imageCenterY - radius, radius * 2, radius * 2);
+  }
+}
+
+void VisionWindow::drawGoal(ImageWidget* image) {
+  QPainter painter(image->getImage());
+  painter.setPen(QPen(QColor(0, 255, 127), 3));
+  auto processor = getImageProcessor(image);
+  const auto& cmatrix = processor->getCameraMatrix();
+  if(IS_RUNNING_CORE) { 
+    ImageProcessor* processor = getImageProcessor(image);
+    std::cout << "Running core" << std::endl;
+    WorldObject* goal = &world_object_block_->objects_[WO_UNKNOWN_GOAL];
+    if(!goal) return;
+
+    //int r = best->radius;
+    int w = cmatrix.getCameraWidthByDistance(goal->visionDistance, 110);
+    int h = cmatrix.getCameraHeightByDistance(goal->visionDistance, 100);
+
+    painter.drawRect(
+      (int)goal->imageCenterX - w - 1,
+      (int)goal->imageCenterY - h - 1, 2 * w + 2, 2 * h + 2);
+  }
+  else if (world_object_block_ != NULL) {
+    WorldObject* goal = &world_object_block_->objects_[WO_UNKNOWN_GOAL];
+    if(!goal->seen) return;
+    if( (goal->fromTopCamera && _widgetAssignments[image] == IMAGE_BOTTOM) ||
+        (!goal->fromTopCamera && _widgetAssignments[image] == IMAGE_TOP) ) return;
+    //std::cout << "DrawBall: " << ball->imageCenterX << " " << ball->imageCenterY << " " << ball->radius << std::endl;
+    int w = cmatrix.getCameraWidthByDistance(goal->visionDistance, 110);
+    int h = cmatrix.getCameraHeightByDistance(goal->visionDistance, 100);
+
+    painter.drawRect(goal->imageCenterX - w, goal->imageCenterY - h, w * 2, h * 2);
   }
 }
 

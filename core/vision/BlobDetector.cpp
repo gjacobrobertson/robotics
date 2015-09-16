@@ -5,8 +5,8 @@
 BlobDetector::BlobDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
   dx = 4;
   dy = 2;
-  width = 5;
-  height = 5;
+  width = iparams_.width;
+  height = iparams_.height;
 }
 
 vector<Blob*> BlobDetector::findBlobs(unsigned char* segImg) {
@@ -31,6 +31,8 @@ vector<Blob*> BlobDetector::findBlobs(unsigned char* segImg) {
         blob->color = node->data->color;
         blob->avgWidth = (node->data->color_ct) * (dy*1.0) / blob->dy;
         blob_list.push_back(blob);
+//        if (blob->color == c_ORANGE)
+//          blob->print();
       }
     }
   }

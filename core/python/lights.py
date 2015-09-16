@@ -105,6 +105,7 @@ def doFinishedEyeLights():
   doEyeBalls()
 #  doEyePower()
 #  doEyeHeat()
+  doRightEyeBall()
   doLeftEyeGoal()
 
 def doPlayingEyeLights():
@@ -156,8 +157,12 @@ def doRightEyeBall():
   ball = world_objects.getObjPtr(core.WO_BALL)
   if ball.seen:
     #print "See ball"
-    ledsC.allTopRightEye(0,1,1)
-    ledsC.allBottomRightEye(0,0,0)
+    if ball.fromTopCamera:
+      ledsC.allTopRightEye(0,1,1)
+      ledsC.allBottomRightEye(0,0,0)
+    else:
+      ledsC.allTopRightEye(0,0,0)
+      ledsC.allBottomRightEye(0,1,1)
   else:
     #print "Did not see ball"
     ledsC.allTopRightEye(0,0,0)

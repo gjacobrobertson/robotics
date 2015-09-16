@@ -10,22 +10,42 @@ DEG_T_RAD = core.DEG_T_RAD
 RAD_T_DEG = core.RAD_T_DEG
 
 class Playing(Task):
-  def run(self):
-    commands.setStiffness()
-    ball = world_objects.getObjPtr(core.WO_BALL)
-    currentTilt = core.joint_values[core.HeadTilt] * RAD_T_DEG
-    trackingSpeed = 10
-    if ball.seen:
-      aboveCenter = ball.imageCenterY < 100
-      belowCenter = ball.imageCenterY > 140
-      print "Current Tilt: {0}".format(currentTilt)
-      print "AboveCenter: {}".format(aboveCenter)
-      print "BelowCenter: {0}".format(belowCenter)
-      if aboveCenter and currentTilt < 30:
-        commands.setHeadTilt(currentTilt + trackingSpeed)
-      elif belowCenter and currentTilt > -30:
-        commands.setHeadTilt(currentTilt - trackingSpeed)
-      else:
-        commands.setHeadTilt(currentTilt)
-    else:
-        commands.setHeadTilt(currentTilt)
+
+  def SearchBallNode(Task):
+
+    def run(self):
+      commands.setHeadPan(45 * DEG_T_RAD)
+      if ball.seen:
+        self.finish()
+
+  def TrackBallNode(self):
+    def run(self):
+      ball = world_objects.getObjPtr(core.WO_BALL)
+      angle = core.joint_values[core.HeadYaw]
+      if ball.seen:
+        angle = ball.visionBearing
+      commands.setHeadPan(angle, 0.2)
+
+   def setup(self):
+     search = SearchBallNode()
+     track = TrackBallNode()
+     self.trans(search,C,track)
+#  def run(self):
+#    commands.setStiffness()
+#    ball = world_objects.getObjPtr(core.WO_BALL)
+#    currentTilt = core.joint_values[core.HeadTilt] * RAD_T_DEG
+#    trackingSpeed = 10
+#    if ball.seen:
+#      aboveCenter = ball.imageCenterY < 100
+#      belowCenter = ball.imageCenterY > 140
+#      print "Current Tilt: {0}".format(currentTilt)
+#      print "AboveCenter: {}".format(aboveCenter)
+#      print "BelowCenter: {0}".format(belowCenter)
+#      if aboveCenter and currentTilt < 30:
+#        commands.setHeadTilt(currentTilt + trackingSpeed)
+#      elif belowCenter and currentTilt > -30:
+#        commands.setHeadTilt(currentTilt - trackingSpeed)
+#      else:
+#        commands.setHeadTilt(currentTilt)
+#    else:
+#        commands.setHeadTilt(currentTilt)
