@@ -24,6 +24,9 @@ struct Run{
     yf(y),
     rank(0),
     parent(this) {}
+  
+  Run* find();
+  void print();
 };
 
 class RegionDetector : public ObjectDetector {

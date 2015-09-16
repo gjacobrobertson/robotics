@@ -116,6 +116,7 @@ void ImageProcessor::processFrame(){
   auto blobs = extractBlobs(regions);
   detectBall(blobs);
   detectGoal(blobs);
+  beacon_detector_->findBeacons(regions);
   for (auto it=blobs.begin();it!=blobs.end();it++)
   {
     for (auto blob=it->second.begin();blob!=it->second.end();blob++)
@@ -130,7 +131,6 @@ void ImageProcessor::processFrame(){
       delete *run;
     }
   }
-  //beacon_detector_->findBeacons(regions);
 }
 
 void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {

@@ -1,6 +1,20 @@
 #include "RegionDetector.h"
 #include "structures/Blob.h"
 
+Run* Run::find()
+{
+  if (parent != this) {
+    parent = parent->find();
+  }
+  return parent;
+}
+
+void Run::print()
+{
+  cout << "Run(" << COLOR_NAME(color) << ")";
+  cout << " Bounded by (" << xi << "," << yi << "," << xf << "," << yf << ")"; 
+  cout << endl;
+}
 RegionDetector::RegionDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
   dx = 4;
   dy = 2;
@@ -64,10 +78,7 @@ void RegionDetector::mergingPass(vector<vector<Run*>> &rows) {
   } 
 }
 Run* RegionDetector::find(Run* run) {
-  if (run != run->parent) {
-    run->parent = find(run->parent);
-  }
-  return run->parent;
+  return run->find();
 }
 
 void RegionDetector::merge(Run* a, Run* b) {
