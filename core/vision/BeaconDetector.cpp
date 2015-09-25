@@ -28,7 +28,7 @@ void BeaconDetector::checkBeacon(Run *run, vector<vector<Run*>> &regions)
   Run* topRing = findRegionAbove(regions, botRing);
   if (topRing == NULL || !checkRatio(topRing) || !checkColor(topRing)) return;
   Run* aboveBeacon = findRegionAbove(regions, topRing);
-  if (aboveBeacon != NULL && checkColor(aboveBeacon)) return;
+  if (aboveBeacon != NULL && checkColor(aboveBeacon) && checkRatio(aboveBeacon)) return;
   updateWorldObject(botRing, topRing); 
 }
 

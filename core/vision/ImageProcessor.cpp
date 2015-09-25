@@ -5,12 +5,12 @@
 #include <iostream>
 
 ImageProcessor::ImageProcessor(VisionBlocks& vblocks, const ImageParams& iparams, Camera::Type camera) :
-  vblocks_(vblocks), iparams_(iparams), camera_(camera), cmatrix_(iparams_, camera), calibration_(NULL)
+  vblocks_(vblocks), iparams_(iparams), camera_(camera), cmatrix_(iparams_, camera), calibration_(NULL), hstep(4), vstep(2)
 {
   enableCalibration_ = false;
-  classifier_ = new Classifier(vblocks_, vparams_, iparams_, camera_);
+  classifier_ = new Classifier(vblocks_, vparams_, iparams_, camera_, hstep, vstep);
   beacon_detector_ = new BeaconDetector(DETECTOR_PASS_ARGS);
-  region_detector_ = new RegionDetector(DETECTOR_PASS_ARGS);
+  region_detector_ = new RegionDetector(DETECTOR_PASS_ARGS, hstep, vstep);
 }
 
 void ImageProcessor::init(TextLogger* tl){
@@ -104,6 +104,12 @@ void ImageProcessor::setCalibration(RobotCalibration calibration){
 void ImageProcessor::processFrame(){
   if(vblocks_.robot_state->WO_SELF == WO_TEAM_COACH && camera_ == Camera::BOTTOM) return;
   visionLog(30, "Process Frame camera %i", camera_);
+  
+  // Timing info
+//  std::clock_t start,end;
+//  double duration;
+
+//  start = std::clock();
 
   updateTransform();
   // Horizon calculation
@@ -111,12 +117,18 @@ void ImageProcessor::processFrame(){
   HorizonLine horizon = HorizonLine::generate(iparams_, cmatrix_, 30000);
   vblocks_.robot_vision->horizon = horizon;
   visionLog(30, "Classifying Image", camera_);
+//  start = std::clock();
   if(!classifier_->classifyImage(color_table_)) return;
+//  end = std::clock();
   vector<vector<Run*>> regions = region_detector_->findRegions(getSegImg());
+
   auto blobs = extractBlobs(regions);
+
   detectBall(blobs);
-  detectGoal(blobs);
-  beacon_detector_->findBeacons(regions);
+  if (camera_ == Camera::TOP){
+    detectGoal(blobs);
+    beacon_detector_->findBeacons(regions);
+  }
   for (auto it=blobs.begin();it!=blobs.end();it++)
   {
     for (auto blob=it->second.begin();blob!=it->second.end();blob++)
@@ -140,7 +152,9 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
   int minSize = 70;
   float targetPixelRatio = 3.14 / 4.0;
   WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
-  ball->seen = false;
+  if (camera_ == Camera::BOTTOM) // If do this on top camera we override what bottom saw
+    ball->seen = false;
+  if (ball->seen && camera_ == Camera::TOP) return;
   vector<Blob*> blobs = blob_map[c_ORANGE];
   for (auto it=blobs.begin(); it!=blobs.end(); it++) {
     Blob *blob = *it;
@@ -169,7 +183,7 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
 
 void ImageProcessor::detectGoal(map<char, vector<Blob*>> &blob_map) {
   int imageX=0, imageY=0;
-  int minSize = 1500;
+  int minSize = 2500;
   vector<Blob*> blobs = blob_map[c_BLUE];
   WorldObject* goal = &vblocks_.world_object->objects_[WO_UNKNOWN_GOAL];
   goal->seen = false;
@@ -254,7 +268,7 @@ map<char, vector<Blob*>> ImageProcessor::extractBlobs(vector<vector<Run*>> &regi
         blob->dy = (blob->yf - blob->yi) + 1;
         blob->correctPixelRatio = 2.0 * run->color_ct / (blob->dx * blob->dy);
         
-        if (blobs.count(run->color) == 0)
+        if (blobs.count(run->color) == 0  && blob->dx * blob->dy > 10)
         {
           vector<Blob*> list;
           blobs[run->color] = list;

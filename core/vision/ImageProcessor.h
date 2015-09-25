@@ -67,6 +67,8 @@ class ImageProcessor {
     bool enableCalibration_;
     BeaconDetector* beacon_detector_;
     RegionDetector* region_detector_;
+
+    int hstep, vstep;
 };
 
 #endif

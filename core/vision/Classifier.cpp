@@ -3,8 +3,8 @@
 
 using namespace cv;
 
-Classifier::Classifier(const VisionBlocks& vblocks, const VisionParams& vparams, const ImageParams& iparams, const Camera::Type& camera) :
-    vblocks_(vblocks), vparams_(vparams), iparams_(iparams), camera_(camera), initialized_(false) {
+Classifier::Classifier(const VisionBlocks& vblocks, const VisionParams& vparams, const ImageParams& iparams, const Camera::Type& camera, int horz_step, int vert_step) :
+    vblocks_(vblocks), vparams_(vparams), iparams_(iparams), camera_(camera), initialized_(false), hstep(horz_step), vstep(vert_step) {
   segImg_ = new unsigned char[iparams.size];
   segImgLocal_ = segImg_;
   setImagePointers();
@@ -73,10 +73,13 @@ void Classifier::classifyImage(const FocusArea& area, unsigned char* colorTable)
     visionLog(20, "Classifying with no raw image");
   }
   colorTable_ = colorTable;
-  int vstep = 1 << 1;
-  int hstep = 1 << 2;
-  for (int y = area.y1; y <= area.y2; y += vstep) {
-    for(int x = area.x1; x <= area.x2; x += hstep) {
+  float bottom_multiplier = 1;
+  if (camera_ == Camera::BOTTOM)
+    bottom_multiplier = 1;
+//  int vstep = 1 << 1;
+//  int hstep = 1 << 2;
+  for (int y = area.y1; y <= area.y2; y += (vstep * bottom_multiplier)) {
+    for(int x = area.x1; x <= area.x2; x += (hstep * bottom_multiplier)) {
       auto c = ColorTableMethods::xy2color(img_, colorTable, x, y, iparams_.width);
       segImg_[iparams_.width * y + x] = c;
     }

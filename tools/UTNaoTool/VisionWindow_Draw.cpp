@@ -227,14 +227,19 @@ void VisionWindow::drawBall(ImageWidget* image) {
   painter.setPen(QPen(QColor(0, 255, 127), 3));
   if(IS_RUNNING_CORE) { // Added ! to force draw ball
     ImageProcessor* processor = getImageProcessor(image);
-    std::cout << "Running core" << std::endl;
-    BallCandidate* best = processor->getBestBallCandidate();
-    if(!best) return;
-    
-    int r = best->radius;
-    painter.drawEllipse(
-      (int)best->centerX - r - 1,
-      (int)best->centerY - r - 1, 2 * r + 2, 2 * r + 2);
+//    std::cout << "Running core" << std::endl;
+//    BallCandidate* best = processor->getBestBallCandidate();
+    WorldObject* ball = &world_object_block_->objects_[WO_BALL];
+    if(!ball->seen) return;
+    if( (ball->fromTopCamera && _widgetAssignments[image] == IMAGE_BOTTOM) ||
+        (!ball->fromTopCamera && _widgetAssignments[image] == IMAGE_TOP) ) return;
+    //std::cout << "DrawBall: " << ball->imageCenterX << " " << ball->imageCenterY << " " << ball->radius << std::endl;
+    int radius = ball->radius;
+    painter.drawEllipse(ball->imageCenterX - radius, ball->imageCenterY - radius, radius * 2, radius * 2);
+//    int r = best->radius;
+//    painter.drawEllipse(
+//      (int)best->centerX - r - 1,
+//      (int)best->centerY - r - 1, 2 * r + 2, 2 * r + 2);
   }
   else if (world_object_block_ != NULL) {
     WorldObject* ball = &world_object_block_->objects_[WO_BALL];
@@ -254,10 +259,12 @@ void VisionWindow::drawGoal(ImageWidget* image) {
   const auto& cmatrix = processor->getCameraMatrix();
   if(IS_RUNNING_CORE) { 
     ImageProcessor* processor = getImageProcessor(image);
-    std::cout << "Running core" << std::endl;
+//    std::cout << "Running core" << std::endl;
     WorldObject* goal = &world_object_block_->objects_[WO_UNKNOWN_GOAL];
     if(!goal) return;
-
+    if( (goal->fromTopCamera && _widgetAssignments[image] == IMAGE_BOTTOM) ||
+        (!goal->fromTopCamera && _widgetAssignments[image] == IMAGE_TOP) ) return;
+    if (!goal->seen) return;
     //int r = best->radius;
     int w = cmatrix.getCameraWidthByDistance(goal->visionDistance, 110);
     int h = cmatrix.getCameraHeightByDistance(goal->visionDistance, 100);

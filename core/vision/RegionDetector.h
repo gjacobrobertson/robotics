@@ -31,7 +31,7 @@ struct Run{
 
 class RegionDetector : public ObjectDetector {
   public:
-    RegionDetector(DETECTOR_DECLARE_ARGS);
+    RegionDetector(DETECTOR_DECLARE_ARGS, int hstep, int vstep);
     void init(TextLogger* tl) { textlogger = tl; }
     std::vector<std::vector<Run*>> findRegions(unsigned char* segImg);
   protected:
@@ -42,5 +42,5 @@ class RegionDetector : public ObjectDetector {
     void mergeStats(Run* a, Run* b);
   private:
     TextLogger* textlogger;
-    int dx,dy,width,height;
+    int dx,dy,width,height,bottom_multiplier;
 };

@@ -15,16 +15,23 @@ void Run::print()
   cout << " Bounded by (" << xi << "," << yi << "," << xf << "," << yf << ")"; 
   cout << endl;
 }
-RegionDetector::RegionDetector(DETECTOR_DECLARE_ARGS) : DETECTOR_INITIALIZE {
-  dx = 4;
-  dy = 2;
+RegionDetector::RegionDetector(DETECTOR_DECLARE_ARGS, int hstep, int vstep) : DETECTOR_INITIALIZE {
+  dx = hstep;
+  dy = vstep;
   width = iparams_.width;
   height = iparams_.height;
+  bottom_multiplier = 1;
 }
 
 vector<vector<Run*>> RegionDetector::findRegions(unsigned char* segImg) {
+
+  if (camera_ == Camera::BOTTOM)
+    bottom_multiplier = 1;
+  else
+    bottom_multiplier = 1;
+
   vector<vector<Run*>> rows;
-  for (int y=0; y < height; y+=dy) {
+  for (int y=0; y < height; y+=dy*bottom_multiplier) {
     rows.push_back(findRuns(segImg, y));
   }
   mergingPass(rows);
@@ -36,7 +43,7 @@ vector<Run*> RegionDetector::findRuns(unsigned char *segImg, int y) {
   int start = 0;
   char runColor = segImg[width * y];
   char color;
-  for (int x=0; x <= width; x+=dx) { 
+  for (int x=0; x <= width; x+=(dx*bottom_multiplier)) { 
     if (x < width) 
       color = segImg[width * y + x];
     else
@@ -55,9 +62,9 @@ vector<Run*> RegionDetector::findRuns(unsigned char *segImg, int y) {
 }
 
 void RegionDetector::mergingPass(vector<vector<Run*>> &rows) {
-  for (int y=dy; y<height;y+=dy) {
-    vector<Run*> firstRow = rows[y/dy - 1];
-    vector<Run*> secondRow = rows[y/dy];
+  for (int y=(dy*bottom_multiplier); y<height;y+=(dy*bottom_multiplier)) {
+    vector<Run*> firstRow = rows[y/(dy*bottom_multiplier) - 1];
+    vector<Run*> secondRow = rows[y/(dy*bottom_multiplier)];
     int i=0;
     int j=0;
     while (i < firstRow.size() and j < secondRow.size()) {
