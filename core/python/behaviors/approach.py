@@ -12,17 +12,17 @@ class Playing(StateMachine):
   class Approach(Node):
     targetDistance = 250
     def __init__(self):
-      x = PID(1, 0, 0)
-      y = PID(1, 0, 0)
-      t = PID(1, 0, 0)
-      controller = (x, y, t)
+      self.x = PID(1, 0, 0)
+      self.y = PID(1, 0, 0)
+      self.t = PID(1, 0, 0)
+      self.controller = (x, y, t)
 
     def run(self):
       goal = world_objects.getObjPtr(core.WO_GOAL)
       ball = world_objects.getObjPtr(core.WO_BALL)
       target_pos = get_target_position(goal, ball)
       update = lambda(e, pid): pid.update(e)
-      control = map(lambda x: update(*x), zip(target_pos, controller))
+      control = map(lambda x: update(*x), zip(target_pos, self.controller))
       commands.setWalkVelocity(*control)
       
     def get_target_position(self, goal, ball):
