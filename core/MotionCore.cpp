@@ -184,8 +184,9 @@ void MotionCore::processMotionFrame() {
 
 
   // kicks need to be before walk, so that they can change the walk request
-  if(kick_)
+  if(kick_){
     kick_->processFrame();
+  }
   if (walk_ != NULL)
     walk_->processFrame();
 

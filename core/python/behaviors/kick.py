@@ -6,6 +6,8 @@ class Playing(StateMachine):
   class Stand(Node):
     def run(self):
       commands.stand()
+      if self.getTime() < 1.0:
+        memory.kick_request.kick_loaded_ = False
       if self.getTime() > 3.0:
         self.finish()
 

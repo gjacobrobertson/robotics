@@ -15,7 +15,7 @@
 KickModule::KickModule() : state_(Finished), sequence_(NULL) { }
 
 void KickModule::initSpecificModule() {
-  auto file = cache_.memory->data_path_ + "kicks/default.yaml";
+/*  auto file = cache_.memory->data_path_ + "kicks/default.yaml";
   sequence_ = new KeyframeSequence();
   printf("Loading kick sequence from '%s'...", file.c_str());
   fflush(stdout);
@@ -24,6 +24,27 @@ void KickModule::initSpecificModule() {
   else {
     printf("failed!\n");
     sequence_ = NULL;
+  }
+  initial_ = NULL; */
+  loadKickFromFile();
+}
+
+void KickModule::loadKickFromFile() {
+
+  if (sequence_ != NULL) delete sequence_;
+
+  auto file = cache_.memory->data_path_ + "kicks/default.yaml";
+  sequence_ = new KeyframeSequence();
+  printf("Loading kick sequence from '%s'...", file.c_str());
+  fflush(stdout);
+  if(sequence_->load(file)){
+    printf("success!\n");
+    cache_.kick_request->kick_loaded_ = true;
+  }
+  else {
+    printf("failed!\n");
+    sequence_ = NULL;
+    cache_.kick_request->kick_loaded_ = false;
   }
   initial_ = NULL;
 }

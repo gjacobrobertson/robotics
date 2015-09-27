@@ -11,6 +11,7 @@ class KickModule : public Module {
   public:
     KickModule();
     void initSpecificModule();
+    void loadKickFromFile();
     void specifyMemoryDependency();
     void specifyMemoryBlocks();
 

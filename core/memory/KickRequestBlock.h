@@ -55,6 +55,7 @@ public:
     ball_image_center_y_(0),
     ball_seen_(false),
     new_head_(true),
+    kick_loaded_(false),
     kick_running_(false),
     vision_kick_running_(false),
     allow_correction_walk_(false),
@@ -144,6 +145,8 @@ public:
   int ball_image_center_y_;
   bool ball_seen_;
   bool new_head_;
+
+  bool kick_loaded_;
 
   bool kick_running_;
   bool vision_kick_running_;

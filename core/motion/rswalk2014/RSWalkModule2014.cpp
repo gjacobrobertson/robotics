@@ -402,6 +402,14 @@ void RSWalkModule2014::processFrame() {
 		} 
    	}
 
+        // KICK LEG JOINTS
+        if (false) {
+	  commands_->stiffness_[LHipPitch] = 0.0;
+          commands_->stiffness_[LHipRoll] = 0.0;
+	  commands_->stiffness_[LKneePitch] = 0.0;
+          commands_->stiffness_[LAnklePitch] = 0.0;
+          commands_->stiffness_[RAnkleRoll] = 0.0;
+	}
 	// Ruohan: setting head stiffness was commented out in bhuman. Should ask Jake about this	
 	commands_->stiffness_[HeadPitch] = 1.0;
 //	commands_->stiffness_[HeadYaw] = 1.0;
