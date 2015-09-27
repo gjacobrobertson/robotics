@@ -127,7 +127,7 @@ void ImageProcessor::processFrame(){
   detectBall(blobs);
   if (camera_ == Camera::TOP){
     detectGoal(blobs);
-    beacon_detector_->findBeacons(regions);
+    //beacon_detector_->findBeacons(regions);
   }
   for (auto it=blobs.begin();it!=blobs.end();it++)
   {
