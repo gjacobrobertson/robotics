@@ -58,7 +58,7 @@ keyframes:
       LHipYawPitch: 0.00240422658784449
       LHipRoll: 0.349159270371052
       LHipPitch: -10.4567054305877
-      LKneePitch: 56.951428695887
+      LKneePitch: 51.951428695887
       LAnklePitch: -45.9697822464488
       LAnkleRoll: -0.00240422658784449
       RHipYawPitch: 0.00240422658784449
@@ -82,9 +82,9 @@ keyframes:
       HeadPitch: -20.5642652511827
       LHipYawPitch: 0.0902951008275686
       LHipRoll: 1.40386342162608
-      LHipPitch: -49.2851990491623
-      LKneePitch: 56.0725199534897
-      LAnklePitch: -8.987024307665
+      LHipPitch: -54.2851990491623
+      LKneePitch: 51.0725199534897
+      LAnklePitch: -3.987024307665
       LAnkleRoll: -0.00240422658784449
       RHipYawPitch: 0.0902951008275686
       RHipRoll: 0.0902951008275686
