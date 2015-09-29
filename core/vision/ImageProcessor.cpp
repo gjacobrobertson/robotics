@@ -149,7 +149,7 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
   int imageX=0, imageY=0;
   float aspectRatio;
   bool aspectRatioMatch, pixelRatioMatch;
-  int minSize = 70;
+  int minSize = 100;
   float targetPixelRatio = 3.14 / 4.0;
   WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
   if (camera_ == Camera::BOTTOM) // If do this on top camera we override what bottom saw
@@ -172,7 +172,7 @@ void ImageProcessor::detectBall(map<char, vector<Blob*>> &blob_map) {
       ball->imageCenterY = imageY;
       ball->radius = (blob->dx + blob->dy) / 4;
       ball->fromTopCamera = camera_ == Camera::TOP;
-      Position p = cmatrix_.getWorldPosition(imageX, imageY, blob->dy);
+      Position p = cmatrix_.getWorldPosition(imageX, imageY, 30);
       ball->visionBearing = cmatrix_.bearing(p);
       ball->visionElevation = cmatrix_.elevation(p);
       ball->visionDistance = cmatrix_.groundDistance(p);
@@ -197,7 +197,7 @@ void ImageProcessor::detectGoal(map<char, vector<Blob*>> &blob_map) {
     goal->imageCenterX = imageX;
     goal->imageCenterY = imageY;
     goal->fromTopCamera = camera_ == Camera::TOP;
-    Position p = cmatrix_.getWorldPosition(imageX, imageY);
+    Position p = cmatrix_.getWorldPosition(imageX, imageY, 250);
     goal->visionBearing = cmatrix_.bearing(p);
     goal->visionElevation = cmatrix_.elevation(p); 
     goal->visionDistance = cmatrix_.groundDistance(p);

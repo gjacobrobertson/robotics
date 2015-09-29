@@ -40,4 +40,4 @@ class Playing(StateMachine):
     off = self.Off()
     turn = self.Turn()
     curve = self.Curve()
-    self.trans(stand, C, walk, T(5.0), turn, T(5.0), curve, T(8.0), sit, C, off)
+    self.trans(stand, C, walk, T(10.0), sit, C, off)

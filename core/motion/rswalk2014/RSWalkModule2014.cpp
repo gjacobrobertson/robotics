@@ -264,7 +264,7 @@ void RSWalkModule2014::processFrame() {
 	    config.saveToFile("gyro_calibration.txt");
 	    last_calibration_write = frame_info_->seconds_since_start;
 	  }
-	} else if ((calX_count < 2 || calY_count < 2)) {
+	} else if ((calX_count < 0 || calY_count < 2)) {
 		odometry_->walkDisabled = true;
 	}
 

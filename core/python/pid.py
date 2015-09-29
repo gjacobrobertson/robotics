@@ -6,7 +6,7 @@ class PID(object):
     self.last_error = 0
     self.cum_error = 0
 
-  def update(e):
+  def update(self, e):
     p = self.kp * e
 
     #Update integral
