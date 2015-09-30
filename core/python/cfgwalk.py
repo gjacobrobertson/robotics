@@ -15,7 +15,7 @@ def initWalk():
   walk_param.bh_params_.speedMax = core.Pose2D(0.8,120,50)
   walk_param.bh_params_.speedMaxBackwards = 50
   walk_param.bh_params_.speedMaxChange = core.Pose2D(0.1,20,10)
-  walk_param.bh_params_.rsSpeedMax = core.Pose2D(0.87,300,180)# 0.87, 300, 200
+  walk_param.bh_params_.rsSpeedMax = core.Pose2D(0.87,300,200)# 0.87, 300, 200
   walk_param.bh_params_.rsMaxChange = core.Pose2D(0.87,50,50)#0.87,50,50
   walk_param.bh_params_.rs_turn_angle_offset = 0 #TODO 07/19/2015
   # Default settings for walk speed control

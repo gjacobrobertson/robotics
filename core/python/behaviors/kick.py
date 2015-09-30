@@ -22,16 +22,16 @@ class Playing(StateMachine):
         self.finish()
 
   class Approach(Node):
-    target_x = 150
-    target_y = 50
+    target_x = 120#150
+    target_y = 40 # 50
     target_d = math.hypot(target_x, target_y)
     deflection_t = math.asin(target_y / target_x)
 
     def __init__(self):
       Node.__init__(self)
-      self.x = PID(0.3, 0.001, 0.0, 300)
-      self.y = PID(0.4, 0.001, 0.0, 200)
-      self.t = PID(0.1, 0.001, 0.0, 0.87 )
+      self.x = PID(0.3, 0.001, 0.001, 300) # 0.3 0.001 0.0
+      self.y = PID(0.4, 0.0003, 0.0, 200) # 0.4 0.001 0.0 200
+      self.t = PID(0.1, 0.001, 0.0, 0.87 ) # 0.1 0.001 0.0
       self.controller = (self.x, self.y, self.t)
       self.target_pos = None
       self.last_seen = 0
@@ -43,9 +43,9 @@ class Playing(StateMachine):
         print "Ball Distance: ", ball.visionDistance 
         self.last_seen = 0
         self.target_pos = self.get_target_position(goal, ball)
-        print "Target Position: ", self.target_pos
+        print "Target Position: {0}, {1}, {2}".format(self.target_pos[0], self.target_pos[1], math.degrees(self.target_pos[2])) #, self.target_pos
         (x, y, t) = self.target_pos
-        if (x < 50 and abs(y) < 10 and abs(math.degrees(t)) < 10):
+        if (x < 50 and abs(y) < 40 and abs(math.degrees(t)) < 10): # 50 40 10
           self.finish()
         update = lambda e, pid: pid.update(e)
         control = map(lambda x: update(*x), zip(self.target_pos, self.controller))
@@ -54,7 +54,8 @@ class Playing(StateMachine):
       else:
         self.last_seen += 1
       if self.last_seen > 10:
-        commands.setWalkVelocity(0, 0, 0)
+        print "Search!"
+        commands.setWalkVelocity(0, 0, 0.3)
         
       
     def get_target_position(self, goal, ball):
@@ -131,4 +132,4 @@ class Playing(StateMachine):
   def setup(self):
 #    self.trans(self.Stand(), C, self.FinalApproach(), C, self.Stand(), C, self.Kick(), C, self.Stand(), C, pose.Sit(), C, self.Off())
     #self.trans(self.stand(), C, self.Kick(), C, self.Stand(), C, pose.Sit(), C, self.Off())
-    self.trans(self.Stand(), C, self.Approach(), C, self.Stand(), C,pose.Sit(), C, self.Off())
+    self.trans(self.Stand(), C, self.Approach(), C, self.Stand(), C, self.Kick(), C, self.Stand(), C, pose.Sit(), C, self.Off())
