@@ -8,6 +8,10 @@ class PID(object):
     self.last_error = 0
     self.cum_error = 0
 
+  def reset(self):
+    self.cum_error = 0
+    self.last_error = 0
+
   def update(self, e):
     e = (self.alpha * e) + ((1.0 - self.alpha) * self.last_error)
     p = self.kp * e
