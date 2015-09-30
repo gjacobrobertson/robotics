@@ -22,12 +22,16 @@ class Playing(StateMachine):
         self.finish()
 
   class Approach(Node):
-    targetDistance = 150
+    target_x = 150
+    target_y = 50
+    target_d = math.hypot(target_x, target_y)
+    deflection_t = math.asin(target_y / target_x)
+
     def __init__(self):
       Node.__init__(self)
-      self.x = PID(0.2, 0.0005, 0.0, 300)
-      self.y = PID(0.2, 0.0025, 0.0, 200)
-      self.t = PID(0.5, 0, 0, -0.87 )
+      self.x = PID(0.3, 0.001, 0.0, 300)
+      self.y = PID(0.4, 0.001, 0.0, 200)
+      self.t = PID(0.1, 0.001, 0.0, 0.87 )
       self.controller = (self.x, self.y, self.t)
       self.target_pos = None
       self.last_seen = 0
@@ -41,7 +45,7 @@ class Playing(StateMachine):
         self.target_pos = self.get_target_position(goal, ball)
         print "Target Position: ", self.target_pos
         (x, y, t) = self.target_pos
-        if (x < 50 and abs(y) < 50 and abs(math.degrees(t)) < 10):
+        if (x < 50 and abs(y) < 10 and abs(math.degrees(t)) < 10):
           self.finish()
         update = lambda e, pid: pid.update(e)
         control = map(lambda x: update(*x), zip(self.target_pos, self.controller))
@@ -63,8 +67,9 @@ class Playing(StateMachine):
       except ZeroDivisionError:
         r = float('inf') * dy
       target_t = math.atan(r)
-      target_x = ball_x - (math.cos(target_t) * self.targetDistance)
-      target_y = ball_y - (math.sin(target_t) * self.targetDistance)
+      target_deflection = target_t + self.deflection_t
+      target_x = ball_x - (math.cos(target_deflection) * self.target_d)
+      target_y = ball_y - (math.sin(target_deflection) * self.target_d)
       return (target_x, target_y, target_t)
 
     def get_object_position(self, obj):
