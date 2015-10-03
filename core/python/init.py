@@ -8,6 +8,7 @@ import lights
 import primary_bvr as behavior
 import cfgwalk, cfgmap
 import UTdebug
+import cfglocalization
 
 def init():
   global firstFrame
@@ -17,7 +18,7 @@ def init():
   print "Python initialized"
 
 def runBehavior(bvr):
-  print bvr
+  print "Running " + bvr + " behavior"
   behavior.load(bvr)
 
 def initMemory():
@@ -30,6 +31,7 @@ def initNonMemory(initLoc=True):
   cfgwalk.initWalk()
   if initLoc:
     core.localizationC.reInit()
+  core.localizationC.loadParams(cfglocalization.params)
   core.opponentsC.reInit()
   commands.setWalkMode(core.WalkMode.SLOW)
 
@@ -58,7 +60,11 @@ behaviorLoaded = False
 def processBehaviorFrame():
   global behaviorLoaded
   if not behaviorLoaded: 
+<<<<<<< HEAD
     runBehavior("approach")#kick")
+=======
+    runBehavior("keeper")
+>>>>>>> 24489c6b2bf2fd7c2c6e82ede151964d496b2056
     behaviorLoaded = True
   try:
     if memory.robot_state.WO_SELF != core.WO_TEAM_COACH:
