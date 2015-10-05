@@ -3,6 +3,7 @@
 #include <memory/LocalizationBlock.h>
 #include <memory/GameStateBlock.h>
 #include <memory/RobotStateBlock.h>
+#include <Eigen/Core>
 
 // Boilerplate
 LocalizationModule::LocalizationModule() : tlogger_(textlogger) {
@@ -65,20 +66,35 @@ void LocalizationModule::processFrame() {
   // and store it back into world objects
   auto sloc = cache_.localization_mem->player;
   self.loc = sloc;
-    
+   
   //TODO: modify this block to use your Kalman filter implementation
   if(ball.seen) {
     // Compute the relative position of the ball from vision readings
     auto relBall = Point2D::getPointFromPolar(ball.visionDistance, ball.visionBearing);
 
     // Compute the global position of the ball based on our assumed position and orientation
+    //auto globalBall = relBall.relativeToGlobal(self.loc, self.orientation);
+
+    Eigen::Matrix<float,2,1> observation;
+    observation(0) = relBall.x;
+    observation(1) = relBall.y;
+
+    ball_filter_->update(observation);
+
+    Eigen::Matrix<float,4,1> current_state = ball_filter_->getState();
+
+    relBall = Point2D(current_state(0), current_state(1));
+    Point2D relVel = Point2D(current_state(2), current_state(3));
+
     auto globalBall = relBall.relativeToGlobal(self.loc, self.orientation);
+    auto globalVel = relVel.relativeToGlobal(self.loc, self.orientation);
 
     // Update the ball in the WorldObject block so that it can be accessed in python
     ball.loc = globalBall;
-    ball.distance = ball.visionDistance;
-    ball.bearing = ball.visionBearing;
-    //ball.absVel = fill this in
+    ball.distance = self.loc.getDistanceTo(relBall); //ball.visionDistance;
+    ball.bearing = self.loc.getBearingTo(relBall, self.orientation); //ball.visionBearing;
+    ball.absVel = globalVel;
+    ball.relVel = relVel;
 
     // Update the localization memory objects with localization calculations
     // so that they are drawn in the World window
