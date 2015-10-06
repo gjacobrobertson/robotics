@@ -5,11 +5,16 @@ class PID(object):
     self.kd = kd
     self.scale = scale
     self.alpha = alpha
-    self.last_error = 0
+    self.last_error = None
     self.cum_error = 0
 
+  def reset(self):
+    self.cum_error = 0
+    self.last_error = None
+
   def update(self, e):
-    e = (self.alpha * e) + ((1.0 - self.alpha) * self.last_error)
+    if self.last_error:
+      e = (self.alpha * e) + ((1.0 - self.alpha) * self.last_error)
     p = self.kp * e
 
     #Update integral
@@ -17,7 +22,9 @@ class PID(object):
     i = self.ki * self.cum_error
 
     #Update Derivative
-    d = self.kd * (e - self.last_error)
+    d = 0
+    if self.last_error:
+      d = self.kd * (e - self.last_error)
     self.last_error = e
  
     return (p + i + d) / self.scale
