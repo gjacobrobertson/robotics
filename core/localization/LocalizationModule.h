@@ -22,4 +22,5 @@ class LocalizationModule : public Module {
     TextLogger*& tlogger_;
     LocalizationParams params_;
     BallFilter *ball_filter_;
+    bool seen_last_frame_;
 };
