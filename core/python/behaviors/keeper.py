@@ -25,20 +25,25 @@ class BlockCenter(Node):
 
 class Blocker(Node):
   def run(self):
+    commands.setStiffness()
     ball = mem_objects.world_objects[core.WO_BALL]
-    selfRobot = mem_objects.world_objects[core.WO_SELF]
-    commands.setHeadPan(ball.bearing, 0.1)
+    #commands.setHeadPan(ball.bearing, 0.1)
 
-    relBall = ball.loc.globalToRelative(selfRobot.loc, selfRobot.orientation)
-    shouldBlock = False
-    if abs(relBall.loc.x / ball.relVel.x) < 3.0 and ball.relVel.x < 0: # Ball will reach us in 3 seconds
-      shouldBlock = True
-
-    if shouldBlock: #if ball.distance < 500 and ball.relVel.x < 0:
+    eta = float('inf')
+    if ball.absVel.x < 0:
+      eta = -1.0 * (ball.loc.x + 1000) / ball.absVel.x
+    #if abs(ball.loc.x / ball.relVel.x) < 3.0 and ball.relVel.x < 0: # Ball will reach us in 3 seconds
+    if eta < 30:
+      intercept = ball.loc.y + (ball.absVel.y * eta)
+      print eta
+      print ball.loc
+      print ball.absVel
+      print ball.relVel
+      print intercept
       UTdebug.log(15, "Ball is close, blocking!")
-      if ball.bearing > 30 * core.DEG_T_RAD:
+      if intercept > 100:
         choice = "left"
-      elif ball.bearing < -30 * core.DEG_T_RAD:
+      elif intercept < -100:
         choice = "right"
       else:
         choice = "center"

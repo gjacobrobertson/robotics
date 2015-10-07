@@ -3,7 +3,7 @@
 #include <Module.h>
 #include <memory/MemoryCache.h>
 #include <localization/LocalizationParams.h>
-#include <localization/BallFilter.h>
+#include <localization/KalmanFilter.h>
 
 class LocalizationModule : public Module {
   public:
@@ -14,13 +14,15 @@ class LocalizationModule : public Module {
     void initFromMemory();
     void initFromWorld();
     void reInit();
+    void initBallFilter();
     void processFrame();
 
     void loadParams(LocalizationParams params);
   protected:
+    typedef KalmanFilter<4, 4> BallFilter;
     MemoryCache cache_;
     TextLogger*& tlogger_;
     LocalizationParams params_;
-    BallFilter *ball_filter_;
+    BallFilter ball_filter_;
     bool seen_last_frame_;
 };
