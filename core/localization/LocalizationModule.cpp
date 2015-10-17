@@ -3,10 +3,15 @@
 #include <memory/LocalizationBlock.h>
 #include <memory/GameStateBlock.h>
 #include <memory/RobotStateBlock.h>
-#include <Eigen/Core>
+#include <localization/ParticleFilter.h>
+#include <localization/Logging.h>
 
 // Boilerplate
-LocalizationModule::LocalizationModule() : tlogger_(textlogger), seen_last_frame_(false) {
+LocalizationModule::LocalizationModule() : tlogger_(textlogger), pfilter_(new ParticleFilter(cache_, tlogger_)) {
+}
+
+LocalizationModule::~LocalizationModule() {
+  delete pfilter_;
 }
 
 // Boilerplate
@@ -16,6 +21,7 @@ void LocalizationModule::specifyMemoryDependency() {
   requiresMemoryBlock("vision_frame_info");
   requiresMemoryBlock("robot_state");
   requiresMemoryBlock("game_state");
+  requiresMemoryBlock("vision_odometry");
 }
 
 // Boilerplate
@@ -25,6 +31,7 @@ void LocalizationModule::specifyMemoryBlocks() {
   getOrAddMemoryBlock(cache_.frame_info,"vision_frame_info");
   getOrAddMemoryBlock(cache_.robot_state,"robot_state");
   getOrAddMemoryBlock(cache_.game_state,"game_state");
+  getOrAddMemoryBlock(cache_.odometry,"vision_odometry");
 }
 
 
@@ -48,100 +55,33 @@ void LocalizationModule::initFromMemory() {
 void LocalizationModule::initFromWorld() {
   reInit();
   auto& self = cache_.world_object->objects_[cache_.robot_state->WO_SELF];
-  cache_.localization_mem->player = self.loc;
+  pfilter_->init(self.loc, self.orientation);
 }
 
 // Reinitialize from scratch
 void LocalizationModule::reInit() {
-  cache_.localization_mem->player = Point2D(-750,0);
+  pfilter_->init(Point2D(-750,0), 0.0f);
   cache_.localization_mem->state = decltype(cache_.localization_mem->state)::Zero();
   cache_.localization_mem->covariance = decltype(cache_.localization_mem->covariance)::Identity();
-  initBallFilter();
 }
 
-// Initialize the ball filter
-void LocalizationModule::initBallFilter() {
-  ball_filter_.x.setZero();
+void LocalizationModule::moveBall(const Point2D& position) {
+  // Optional: This method is called when the player is moved within the localization
+  // simulator window.
+}
 
-  BallFilter::StateVector p;
-  p << 0.1, 0.1, 0.1, 0.1;
-  ball_filter_.P = p.asDiagonal();
-
-  ball_filter_.A.setIdentity();
-  ball_filter_.A.topRightCorner<2,2>().setIdentity();
-
-  BallFilter::StateVector q;
-  q << 0.1, 0.1, 0.1, 0.1;
-  ball_filter_.Q = q.asDiagonal();
-
-  ball_filter_.H.setIdentity();
-
-  BallFilter::MeasurementVector r;
-  r << 0.1, 0.1, 0.1, 0.1; 
-  ball_filter_.R = r.asDiagonal();
+void LocalizationModule::movePlayer(const Point2D& position, float orientation) {
+  // Optional: This method is called when the player is moved within the localization
+  // simulator window.
 }
 
 void LocalizationModule::processFrame() {
-  auto& ball = cache_.world_object->objects_[WO_BALL];
   auto& self = cache_.world_object->objects_[cache_.robot_state->WO_SELF];
 
-  // Retrieve the robot's current location from localization memory
-  // and store it back into world objects
-  auto sloc = cache_.localization_mem->player;
-  self.loc = sloc;
-   
-  if(ball.seen) {
-
-    // Compute the relative position of the ball from vision readings
-    auto relBall = Point2D::getPointFromPolar(ball.visionDistance, ball.visionBearing);
-    auto belief = ball_filter_.x;
-
-    BallFilter::MeasurementVector observation;
-    observation(0) = relBall.x;
-    observation(1) = relBall.y;
-
-    if (seen_last_frame_)
-    {
-      observation(2) = relBall.x - belief(0);
-      observation(3) = relBall.y - belief(1);
-    }
-    else
-    {
-      observation(2) = belief(2);
-      observation(3) = belief(3); 
-    }
-    
-    seen_last_frame_ = true;
-
-    ball_filter_.predict();
-    ball_filter_.correct(observation);
-
-  } 
-  else {
-    seen_last_frame_ = false;
-    ball_filter_.predict();
-  }
-  
-  auto new_belief = ball_filter_.x;
-
-  auto relBall = Point2D(new_belief(0), new_belief(1));
-  auto relVel = Point2D(new_belief(2), new_belief(3));
-
-  auto globalBall = relBall.relativeToGlobal(self.loc, self.orientation);
-  auto globalVel = relVel;
-  globalVel.rotate(self.orientation);
-
-  // Update the ball in the WorldObject block so that it can be accessed in python
-  ball.loc = globalBall;
-  ball.relPos = relBall;
-  ball.distance = relBall.getMagnitude(); //ball.visionDistance;
-  ball.bearing = relBall.getDirection(); //ball.visionBearing;
-  ball.absVel = globalVel;
-  ball.relVel = relVel;
-
-  // Update the localization memory objects with localization calculations
-  // so that they are drawn in the World window
-  cache_.localization_mem->state[0] = ball.loc.x;
-  cache_.localization_mem->state[1] = ball.loc.y;
-  cache_.localization_mem->covariance = ball_filter_.P.topLeftCorner<2, 2>();
+  // Process the current frame and retrieve our location/orientation estimate
+  // from the particle filter
+  pfilter_->processFrame();
+  self.loc = pfilter_->pose().translation;
+  self.orientation = pfilter_->pose().rotation;
+  log(40, "Localization Update: x=%2.f, y=%2.f, theta=%2.2f", self.loc.x, self.loc.y, self.orientation * RAD_T_DEG);
 }
