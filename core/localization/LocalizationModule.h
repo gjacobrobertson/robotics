@@ -17,7 +17,6 @@ class LocalizationModule : public Module {
     void initFromMemory();
     void initFromWorld();
     void reInit();
-    void initBallFilter();
     void processFrame();
 
     void loadParams(LocalizationParams params);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <math/Pose2D.h>
 #include <common/Random.h>
 #include <memory/MemoryCache.h>
@@ -28,4 +30,10 @@ class ParticleFilter {
 
     mutable Pose2D mean_;
     mutable bool dirty_;
+
+    template<int N>
+    double mvnpdf(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x);
+
+    double get_weight(Particle p);
+    Particle sample(double seed);
 };
