@@ -9,12 +9,13 @@ import cfgpose, cfgstiff
 from memory import walk_request, walk_response, kick_request, joint_commands, behavior_mem, joint_angles
 
 class ToPose(Task):
-  def __init__(self, pose, time = 2.0, reverse=False):
+  def __init__(self, pose, time = 2.0, interpolate = 1000.0, reverse=False):
     Task.__init__(self)
     self.pose = pose
     self.time = time
     self.reverse = reverse
-  
+    self.interpolate = interpolate
+
   def reset(self):
     super(ToPose, self).reset()
     self.first = True
@@ -27,7 +28,7 @@ class ToPose(Task):
           joint_commands.setJointCommand(i, val * core.DEG_T_RAD)
 
       joint_commands.send_body_angles_ = True
-      joint_commands.body_angle_time_ = self.time * 1000.0
+      joint_commands.body_angle_time_ = self.time * self.interpolate #1000.0
       walk_request.noWalk()
       kick_request.setNoKick()
       self.first = False

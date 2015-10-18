@@ -25,4 +25,6 @@ class LocalizationModule : public Module {
     LocalizationParams params_;
     BallFilter ball_filter_;
     bool seen_last_frame_;
+    Point2D last_seen_ball;
+    int frames_since_last_seen_;
 };

@@ -11,7 +11,7 @@ const float ButtonModule::MAX_CLICK_INTERVAL = 0.35f;
 const float ButtonModule::MIN_CLICK_TIME = 0.01f; // accept anything
 const float ButtonModule::MAX_CLICK_TIME = 0.75f;
 
-// #define USE_LAB_BUTTONS
+#define USE_LAB_BUTTONS
 
 ButtonModule::ButtonModule():
   center_(true),
