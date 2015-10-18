@@ -38,17 +38,6 @@ void ParticleFilter::processFrame() {
     sum_w += p.w;
   }
 
-
-  if (sum_w < 0.000001) { 
-    for(auto& p: particles()) {
-      p.x = rand_.sampleU(-2500, 2500);
-      p.y = rand_.sampleU(-1250, 1250);
-      p.t = rand_.sampleU(-M_PI, M_PI);
-      p.w = 1;
-    }
-    return;
-  }
-
   //Normalize weights
   for(auto& p: particles()) {
     p.w = p.w / sum_w;
