@@ -31,28 +31,27 @@ void ParticleFilter::processFrame() {
   //Sample and weight particles
   double sum_w = 0;
   for(auto& p: particles()) {
-    p.x = rand_.sampleN(p.x + disp.translation.x * cos(p.t), 50);
-    p.y = rand_.sampleN(p.y + disp.translation.x * sin(p.t), 50);
-    p.t = fmod( rand_.sampleN(p.t + disp.rotation, M_PI / 16), 2 * M_PI) - M_PI;
+    p.x = rand_.sampleN(p.x + disp.translation.x * cos(p.t), 10);
+    p.y = rand_.sampleN(p.y + disp.translation.x * sin(p.t), 10);
+    p.t = fmod( rand_.sampleN(p.t + disp.rotation, M_PI / 64) + M_PI , 2 * M_PI) - M_PI;
     p.w = get_weight(p);
     sum_w += p.w;
   }
 
 
-//  if (sum_w < 0.0001) { 
-//    for(auto& p: particles()) {
-//      p.x = rand_.sampleU(-2500, 2500);
-//      p.y = rand_.sampleU(-1250, 1250);
-//      p.t = rand_.sampleU(-M_PI, M_PI);
-//      p.w = 1;
-//    }
-//    return;
-//  }
+  if (sum_w < 0.000001) { 
+    for(auto& p: particles()) {
+      p.x = rand_.sampleU(-2500, 2500);
+      p.y = rand_.sampleU(-1250, 1250);
+      p.t = rand_.sampleU(-M_PI, M_PI);
+      p.w = 1;
+    }
+    return;
+  }
 
   //Normalize weights
   for(auto& p: particles()) {
     p.w = p.w / sum_w;
-    log(41, "Particle (%2.f, %2.f, %2.f) has weight %f", p.x, p.y, p.t, p.w);
   }
 
   //Resample
@@ -106,19 +105,23 @@ double ParticleFilter::get_weight(Particle p) {
   for(auto &beacon_type : beacon_types) {
     auto& beacon = cache_.world_object->objects_[beacon_type];
     if (beacon.seen) {
+      log(41, "Weighting particle: (%f, %f, %f)", p.x, p.y, p.t);
       Point2D point(p.x, p.y);
       Eigen::Vector2d mu;
       mu << point.getDistanceTo(beacon.loc), 
             point.getBearingTo(beacon.loc, p.t);
+      log(41, "Expected beacon: (%f, %f)", mu[0], mu[1]);
 
       Eigen::Matrix2d sigma;
-      sigma << 50, 0, 
+      sigma << 250, 0, 
                0 , M_PI/16;
 
       Eigen::Vector2d x;
       x << beacon.visionDistance, beacon.visionBearing;      
+      log(41, "Observed beacon: (%f, %f)", x[0], x[1]);
 
       weight *= mvnpdf<2>(mu, sigma, x);
+      log(41, "Assigning weight: %f", weight);
     }
   }
   return weight;
