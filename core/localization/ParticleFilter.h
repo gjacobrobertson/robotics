@@ -33,6 +33,10 @@ class ParticleFilter {
     mutable Pose2D mean_;
     mutable bool dirty_;
 
+    Pose2D meanPoseEstimate() const;
+    Pose2D meanShiftPoseEstimate() const;
+    double meanShift(Eigen::Vector3d &mean) const;
+
     void sampleMotion();
     void reseed();
     void resample();
@@ -41,8 +45,5 @@ class ParticleFilter {
     double get_weight(Particle p);
 
     template<int N>
-    double mvnpdf(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x);
-
-    template<int N>
-    double mvgauss(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x);
+    double mvgauss(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x) const;
 };

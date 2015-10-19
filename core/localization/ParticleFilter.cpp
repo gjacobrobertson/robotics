@@ -22,27 +22,73 @@ void ParticleFilter::init(Point2D loc, float orientation) {
 void ParticleFilter::processFrame() {
   // Indicate that the cached mean needs to be updated
   dirty_ = true;
-
   sampleMotion();
   resample();
 }
 
 const Pose2D& ParticleFilter::pose() const {
   if(dirty_) {
-    // Compute the mean pose estimate
-    mean_ = Pose2D();
-    using T = decltype(mean_.translation);
-    for(const auto& p : particles()) {
-      mean_.translation += T(p.x,p.y);
-      mean_.rotation += p.t;
-    }
-    if(particles().size() > 0)
-      mean_ /= (particles().size());
+    mean_ = meanShiftPoseEstimate();
     dirty_ = false;
   }
   return mean_;
 }
 
+Pose2D ParticleFilter::meanPoseEstimate() const {
+  Pose2D pose;
+  using T = decltype(pose.translation);
+  for(const auto& p : particles()) {
+    pose.translation += T(p.x,p.y);
+    pose.rotation += p.t;
+  }
+  if(particles().size() > 0)
+    pose /= (particles().size());
+  return pose;
+}
+
+
+Pose2D ParticleFilter::meanShiftPoseEstimate() const{
+  Pose2D pose;
+  using T = decltype(pose.translation);
+  double max_density = 0;
+  for(auto& p: particles()) {
+    Eigen::Vector3d mean;
+    mean << p.x, p.y, p.t;
+    double density = meanShift(mean);
+    if (density > max_density) {
+      max_density = density;
+      pose.translation = T(mean[0], mean[1]);
+      pose.rotation = mean[2];    
+    }
+  }
+  return pose;
+}
+
+double ParticleFilter::meanShift(Eigen::Vector3d &mean) const{
+  Eigen::Matrix3d sigma;
+  sigma << pow(100, 2), 0          , 0             ,
+           0          , pow(100, 2), 0             ,
+           0          , 0          , pow(M_PI/8, 2);
+
+  double density;
+  Eigen::Vector3d shift;
+  do {
+    density = 0;
+    Eigen::Vector3d new_mean = Eigen::Vector3d::Zero();
+    for (auto& p: particles()) {
+      Eigen::Vector3d x;
+      x << p.x, p.y, p.t;
+      double w = mvgauss<3>(mean, sigma, x);
+      new_mean += w * x;
+      density += w;
+    }
+    new_mean /= density;
+    shift = new_mean - mean;
+    log(42, "Shifting (%f, %f, %f) to (%f, %f, %f)", mean[0], mean[1], mean[2], new_mean[0], new_mean[1], new_mean[2]);
+    mean += shift;
+  } while (shift[0] > 100 || shift[1] > 100 || shift[2] > M_PI/16);
+  return density;
+}
 void ParticleFilter::sampleMotion() {
   // Retrieve odometry update - how do we integrate this into the filter?
   const auto& disp = cache_.odometry->displacement;
@@ -138,12 +184,8 @@ double ParticleFilter::get_weight(Particle p) {
   return weight;
 }
 
-template<int N>
-double ParticleFilter::mvnpdf(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x) {
-  return exp(-0.5 * (x - mu).transpose() * sigma.inverse() * (x - mu)) / (sqrt(pow(2 * M_PI, N)) * sigma.determinant());
-}
 
 template<int N>
-double ParticleFilter::mvgauss(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x) {
+double ParticleFilter::mvgauss(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x) const {
   return exp(-0.5 * (x - mu).transpose() * sigma.inverse() * (x - mu));
 }
