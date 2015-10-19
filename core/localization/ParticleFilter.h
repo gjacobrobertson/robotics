@@ -28,14 +28,21 @@ class ParticleFilter {
     TextLogger*& tlogger_;
     Random rand_;
     float reseed_factor;
+    int num_particles;
 
     mutable Pose2D mean_;
     mutable bool dirty_;
 
+    void sampleMotion();
+    void reseed();
+    void resample();
+    void weightParticles();
+    Particle sample(double seed);
+    double get_weight(Particle p);
+
     template<int N>
     double mvnpdf(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x);
 
-    double get_weight(Particle p);
-    Particle sample(double seed);
-    void reseed();
+    template<int N>
+    double mvgauss(Eigen::Matrix<double, N, 1> mu, Eigen::Matrix<double, N, N> sigma, Eigen::Matrix<double, N, 1> x);
 };
