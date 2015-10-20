@@ -24,7 +24,7 @@
 /// @ingroup vision
 class Classifier {
  public:
-  Classifier(const VisionBlocks& vblocks, const VisionParams& vparams, const ImageParams& iparams, const Camera::Type& camera, int horz_step, int vert_step);
+  Classifier(const VisionBlocks& vblocks, const VisionParams& vparams, const ImageParams& iparams, const Camera::Type& camera);
   ~Classifier();
   void init(TextLogger* tl){textlogger = tl;};
 
@@ -48,7 +48,5 @@ class Classifier {
   unsigned char* segImg_, *segImgLocal_;
   HorizonLine horizon_;
   unsigned char* colorTable_;
-
-  int hstep, vstep;
 };
 #endif

@@ -26,7 +26,6 @@ struct Blob {
   int edgeStrength;
 
   Blob() : lpIndex(MAX_BLOB_VISIONPOINTS, 0) { }
-  void print();
 };
 
 /// @ingroup vision

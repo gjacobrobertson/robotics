@@ -265,7 +265,7 @@ void RSWalkModule2014::processFrame() {
 	    last_calibration_write = frame_info_->seconds_since_start;
 	  }
 	} else if ((calX_count < 0 || calY_count < 2)) {
-		odometry_->walkDisabled = true;
+		odometry_->walkDisabled = false;
 	}
 
 	// Apply offset and convert from rad/sec to rad /frame
