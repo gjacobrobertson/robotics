@@ -110,9 +110,10 @@ void BeaconDetector::findBeacons(std::map<Color, struct DisjointSet> colorDisjoi
     object.imageCenterY = (box[1] + box[3]) / 2;
 //    std::cout<< box[4] <<endl;
     auto position = cmatrix_.getWorldPosition(object.imageCenterX, object.imageCenterY, heights[beacon.first]);
-    object.visionDistance = cmatrix_.groundDistance(position) * 0.75;
+    object.visionDistance = cmatrix_.groundDistance(position) * (17.0/26.0) + 146.0;
     object.visionBearing = cmatrix_.bearing(position);
-    object.seen = true;
+    if (object.visionDistance < 4000)
+      object.seen = true;
     object.fromTopCamera = camera_ == Camera::TOP;
 //    std::cout<<"distance! "<<getName(beacon.first)<<" "<<object.imageCenterX<<" "<< object.imageCenterY<<" "<< object.visionDistance<<endl;
     visionLog(30, "saw %s at (%i,%i) with calculated distance %2.4f", getName(beacon.first), object.imageCenterX, object.imageCenterY, object.visionDistance);

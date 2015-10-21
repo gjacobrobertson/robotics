@@ -664,6 +664,7 @@ JointValues Walk2014Generator::makeJoints(ActionCommand::All* request,
    j.angles[RSJoints::LAnklePitch]  = -ApL;
    j.angles[RSJoints::RAnklePitch]  = -ApR;
    if (walk2014Option == WALK && nextFootSwitchT>0 && bodyModel.walkKickStart == false) {
+      balanceAdjustment += DEG2RAD(1);
       if(bodyModel.isLeftPhase) j.angles[RSJoints::RAnklePitch]  += balanceAdjustment;
       else                      j.angles[RSJoints::LAnklePitch]  += balanceAdjustment;
    } else if (walk2014Option == KICK) {

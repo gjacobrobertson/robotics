@@ -412,7 +412,7 @@ void RSWalkModule2014::processFrame() {
 	}
 	// Ruohan: setting head stiffness was commented out in bhuman. Should ask Jake about this	
 	commands_->stiffness_[HeadPitch] = 1.0;
-//	commands_->stiffness_[HeadYaw] = 1.0;
+	commands_->stiffness_[HeadYaw] = 1.0;
 	commands_->stiffness_[RHipYawPitch] = commands_->stiffness_[LHipYawPitch]; // RHYP will be overwritten with LHYP anyway but for completeness
 	commands_->angles_[RHipYawPitch] = commands_->angles_[LHipYawPitch];
 

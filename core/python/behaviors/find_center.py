@@ -7,6 +7,16 @@ from state_machine import *
 import geometry
 #import robot_state
 
+class Testing(StateMachine):
+
+  class Walk(Node):
+    def run(self):
+      commands.setWalkVelocity(0.5,0.0,0.0)
+
+  def run(self):
+    return self.Walk()
+    
+
 class Playing(StateMachine):
 
   class Stand(Node):
@@ -16,7 +26,7 @@ class Playing(StateMachine):
         self.finish()
 
   class WalkToCenter(Node):
-    targetDistance = 300
+
     def __init__(self):
       Node.__init__(self)
       self.finishCt = 0
@@ -48,8 +58,8 @@ class Playing(StateMachine):
       elif distanceToCenter > 50:
         xVel = max(min(distanceToCenter / 300.0, 0.5),-0.5)
      
-      commands.setWalkVelocity(0,0,0)#xVel,yVel,tVel)
-#      print "Position {0}, {1}, {2} and velocity: {3}, {4}, {5}".format(robot.loc.x,robot.loc.y,robot.orientation,xVel,yVel,tVel)      
+      commands.setWalkVelocity(xVel,yVel,tVel)
+      print "Position {0}, {1}, {2} and velocity: {3}, {4}, {5}".format(robot.loc.x,robot.loc.y,robot.orientation,xVel,yVel,tVel)      
       # Update how long its been since we saw a beacon
       seen = False
       for b in self.beacons:
@@ -69,7 +79,7 @@ class Playing(StateMachine):
 
       # move head
 #      commands.setHeadTilt(self.tilt)
-      commands.setHeadPan(self.direction * 50 * core.DEG_T_RAD, 1.0)
+      commands.setHeadPan(self.direction * 50 * core.DEG_T_RAD, 0.5)
       if abs(core.joint_values[core.HeadYaw]) > 45 * core.DEG_T_RAD:
         if core.joint_values[core.HeadYaw] > 0:
           self.direction = -1
@@ -106,15 +116,66 @@ class Playing(StateMachine):
         self.finish()
 
       commands.setWalkVelocity(0.0,0.0,0.5)
-      commands.setHeadTilt(-18)
+#      commands.setHeadTilt(-18)
       commands.setHeadPan(0.0,2.0)
+
+  class Search(Node):
+  
+    def __init__(self):
+      Node.__init__(self)
+      self.seenCt = 0
+      self.direction = 1
+      self.beacons = [core.WO_BEACON_BLUE_YELLOW,
+                        core.WO_BEACON_YELLOW_BLUE,
+                        core.WO_BEACON_YELLOW_PINK,
+                        core.WO_BEACON_PINK_YELLOW,
+                        core.WO_BEACON_BLUE_PINK,
+                        core.WO_BEACON_PINK_BLUE]
+
+
+    def run(self):
+
+      commands.stand()
+      commands.setHeadPan(self.direction * 50 * core.DEG_T_RAD, 0.5)
+      if abs(core.joint_values[core.HeadYaw]) > 45 * core.DEG_T_RAD:
+        if core.joint_values[core.HeadYaw] > 0:
+          self.direction = -1
+        else:
+          self.direction = 1
+
+      ct = 0
+      seen = False
+      for b in self.beacons:
+        beacon = world_objects.getObjPtr(b)
+        if beacon.seen:
+          seen = True
+          ct += 1
+
+      if ct >= 2:
+        self.finish()
+
+      if seen:
+        self.seenCt += 1
+      else:
+        self.seenCt = max(self.seenCt - 1, 0)
+
+      if self.seenCt > 5:
+        self.finish()
+
 
   def setup(self):
 
     stand = self.Stand()
     walkToCenter = self.WalkToCenter()
     rotate = self.Rotate()
+    search = self.Search()
 
-    self.trans(self.Stand(), C, walkToCenter)
-    self.trans(walkToCenter, C, rotate, C, walkToCenter)
+    self.trans(stand, C, search)
+    self.trans(search, T(5.0), rotate)
+    self.trans(rotate,T(10.0),search)
+    self.trans(rotate,C,walkToCenter)
+    self.trans(search, C, walkToCenter)
+    self.trans(walkToCenter, C, stand)
+    self.trans(stand, T(10.0), search)    
+#    self.trans(walkToCenter, C, rotate, C, walkToCenter)
     self.setFinish(None)
