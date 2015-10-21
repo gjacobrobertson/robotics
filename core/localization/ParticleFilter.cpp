@@ -4,7 +4,7 @@
 #include <math.h>
 
 ParticleFilter::ParticleFilter(MemoryCache& cache, TextLogger*& tlogger) 
-  : cache_(cache), tlogger_(tlogger), num_particles(200), reseed_factor(0.99), dirty_(true) {
+  : cache_(cache), tlogger_(tlogger), num_particles(200), reseed_factor(0.98), dirty_(true) {
 }
 
 void ParticleFilter::init(Point2D loc, float orientation) {
@@ -106,8 +106,8 @@ void ParticleFilter::sampleMotion() {
 
 void ParticleFilter::reseed() {
   for (int i=num_particles*reseed_factor; i < num_particles; i++) {
-    particles()[i].x = rand_.sampleU(-1500,1500);
-    particles()[i].y = rand_.sampleU(-1000,1000);
+    particles()[i].x = rand_.sampleU(-2500,2500);
+    particles()[i].y = rand_.sampleU(-1250,1250);
     particles()[i].t = rand_.sampleU(-M_PI,M_PI);
     particles()[i].w = 1.0;
   }

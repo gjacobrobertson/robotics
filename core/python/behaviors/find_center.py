@@ -40,6 +40,12 @@ class Playing(StateMachine):
       self.names = ["BY","YB","YP","PY","BP","PB"]
       self.direction = 1.0
       self.tilt = -18
+      self.prevX = 0
+      self.prevY = 0
+      self.prevT = 0
+      self.omniWalk = False
+      self.changeCt = 0
+      self.doneCt = 0
 
     def run(self):
 
@@ -53,12 +59,44 @@ class Playing(StateMachine):
       xVel = 0.0
       yVel = 0.0
       tVel = 0.0
-      if abs(angleToCenter) > 10 * core.DEG_T_RAD:
-        tVel = 0.5 * (angleToCenter / abs(angleToCenter))
-      elif distanceToCenter > 50:
-        xVel = max(min(distanceToCenter / 300.0, 0.5),-0.5)
-     
+
+      if not self.omniWalk:
+
+        if abs(angleToCenter) > 15 * core.DEG_T_RAD:
+          tVel = 0.5 * (angleToCenter / abs(angleToCenter))
+#        else:
+#          yVel = 0.2 * (angleToCenter / abs(angleToCenter))
+        if abs(angleToCenter) > 30 * core.DEG_T_RAD:
+          xVel = 0
+        elif distanceToCenter > 100:
+          xVel = max(min((distanceToCenter + 100) / 300.0, 0.5),-0.5)
+        if distanceToCenter < 600 and tVel > 0.0:
+          xVel = 0.0
+        elif distanceToCenter < 100:
+          tVel = 0.0
+                  
+          
+      else:
+        relCenter = center.globalToRelative(robot.loc,robot.orientation)
+        xVel = max(min((relCenter.x + 0)/ 300.0, 0.5),-0.5)
+        yVel = max(min((relCenter.y)/200.0, 0.5),-0.5)
+
+      if self.omniWalk and distanceToCenter > 800:
+        self.changeCt += 1
+      elif self.omniWalk:
+        self.changeCt = max(self.changeCt - 1,0)
+      if not self.omniWalk and distanceToCenter < 600:
+        self.changeCt += 1
+      elif not self.omniWalk:
+        self.changeCt = max(self.changeCt - 1,0)
+
+      xVel = 0.6*xVel + self.prevX * 0.4
+      yVel = 0.3*yVel + self.prevY * 0.7
+      tVel = 0.3*tVel + self.prevT * 0.7      
       commands.setWalkVelocity(xVel,yVel,tVel)
+      self.prevX = xVel
+      self.prevY = yVel
+      self.prevT = tVel
       print "Position {0}, {1}, {2} and velocity: {3}, {4}, {5}".format(robot.loc.x,robot.loc.y,robot.orientation,xVel,yVel,tVel)      
       # Update how long its been since we saw a beacon
       seen = False
@@ -75,17 +113,30 @@ class Playing(StateMachine):
       else:
         self.lastObsCount += 1
       if self.lastObsCount > 150: # 5 seconds without seeing a beacon
+        self.lastObsCount = 0
         self.finish()
 
       # move head
-#      commands.setHeadTilt(self.tilt)
       commands.setHeadPan(self.direction * 50 * core.DEG_T_RAD, 0.5)
       if abs(core.joint_values[core.HeadYaw]) > 45 * core.DEG_T_RAD:
         if core.joint_values[core.HeadYaw] > 0:
           self.direction = -1
         else:
           self.direction = 1
-#      print "Current: {0} Direction: {1}".format(core.joint_values[core.HeadYaw] * core.RAD_T_DEG, self.direction)
+
+      if self.changeCt > 10:
+        self.changeCt = 0
+        self.prevX = 0.0
+        self.prevY = 0.0
+        self.prevT = 0.0
+
+      if distanceToCenter < 100:
+        self.doneCt +=1
+      else:
+        self.doneCt = max(self.doneCt - 1,0)
+
+      if self.doneCt > 5:
+        self.finish()
 
   class Rotate(Node):
     def __init__(self):
@@ -113,6 +164,7 @@ class Playing(StateMachine):
         self.seenCt = max(self.seenCt - 1, 0)
 
       if self.seenCt > 5:
+        self.seenCt = 0
         self.finish()
 
       commands.setWalkVelocity(0.0,0.0,0.5)
@@ -160,6 +212,7 @@ class Playing(StateMachine):
         self.seenCt = max(self.seenCt - 1, 0)
 
       if self.seenCt > 5:
+        self.seenCt = 0
         self.finish()
 
 
@@ -175,7 +228,7 @@ class Playing(StateMachine):
     self.trans(rotate,T(10.0),search)
     self.trans(rotate,C,walkToCenter)
     self.trans(search, C, walkToCenter)
-    self.trans(walkToCenter, C, stand)
+    self.trans(walkToCenter, C, search)
     self.trans(stand, T(10.0), search)    
 #    self.trans(walkToCenter, C, rotate, C, walkToCenter)
     self.setFinish(None)
