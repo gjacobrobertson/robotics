@@ -72,10 +72,14 @@ class Playing(StateMachine):
           xVel = max(min((distanceToCenter + 100) / 300.0, 0.5),-0.5)
         if distanceToCenter < 600 and tVel > 0.0:
           xVel = 0.0
-        elif distanceToCenter < 100:
+        elif distanceToCenter < 200:
+          relCenter = center.globalToRelative(robot.loc,robot.orientation)
+          xVel = max(min((relCenter.x/300.0),0.5),-0.5)
           tVel = 0.0
-                  
-          
+        elif distanceToCenter < 100:
+          xVel = 0
+          tVel = 0
+                   
       else:
         relCenter = center.globalToRelative(robot.loc,robot.orientation)
         xVel = max(min((relCenter.x + 0)/ 300.0, 0.5),-0.5)

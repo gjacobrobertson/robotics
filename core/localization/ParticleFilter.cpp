@@ -72,6 +72,8 @@ double ParticleFilter::meanShift(Eigen::Vector3d &mean) const{
 
   double density;
   Eigen::Vector3d shift;
+  int iter = 0;
+  int dist_error = 50;
   do {
     density = 0;
     Eigen::Vector3d new_mean = Eigen::Vector3d::Zero();
@@ -86,7 +88,11 @@ double ParticleFilter::meanShift(Eigen::Vector3d &mean) const{
     shift = new_mean - mean;
     log(42, "Shifting (%f, %f, %f) to (%f, %f, %f)", mean[0], mean[1], mean[2], new_mean[0], new_mean[1], new_mean[2]);
     mean += shift;
-  } while (shift[0] > 100 || shift[1] > 100 || shift[2] > M_PI/16);
+    iter ++;
+    if (iter > 100)
+      break;
+  } while (shift[0] > dist_error || shift[1] > dist_error || shift[2] > M_PI/16);
+//  std::cout<<"Iteration: " << iter << std::endl;
   return density;
 }
 void ParticleFilter::sampleMotion() {
