@@ -75,6 +75,15 @@ void WalkRequestBlock::setWalk(float x, float y, float rotation) {
   set(WALK,Pose2D(rotation,x,y),true,false);
 }
 
+void WalkRequestBlock::setLineUp(float heading, bool with_left){
+  new_command_ = true;
+  motion_ = LINE_UP;
+  perform_kick_ = true;
+  kick_heading_ = heading;
+  kick_with_left_ = with_left;
+}
+
+
 void WalkRequestBlock::setPedanticWalk(float x, float y, float rotation) {
   set(WALK,Pose2D(rotation,x,y),true,true);
 }

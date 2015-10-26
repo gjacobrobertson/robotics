@@ -95,7 +95,16 @@ void RSWalkModule2014::processFrame() {
 		body.turn = 0;
 		body.isFast = false;
 		body.bend = 0;
-	} 
+	}
+        else if (walk_request_->motion_ == WalkRequestBlock::LINE_UP)
+        {
+        	body.actionType = ActionCommand::Body::KICK;
+                body.forward = 200.0;
+                body.left = 0;
+		body.turn = 0;
+                body.isFast = false;
+		body.bend = 1;
+        } 
 	else if (walk_request_->motion_ == WalkRequestBlock::WALK)
 	{	
 //		if (walk_request_->walk_to_target_){

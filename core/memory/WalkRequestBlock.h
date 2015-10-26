@@ -18,6 +18,7 @@ public:
     STEP_RIGHT,
     WAIT,
     STAND_STRAIGHT,
+    LINE_UP,
     NUM_OF_MOTIONS
   );
 
@@ -30,6 +31,7 @@ public:
   void wait();
   void setStep(bool isLeft, float x, float y, float rotation);
   void setWalk(float x, float y, float rotation);
+  void setLineUp(float heading, bool with_left);
   void setPedanticWalk(float x, float y, float rotation);
   void setFalling();
   void setKick(float distance, float heading, bool with_left, bool step_into_kick);
