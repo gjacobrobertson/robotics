@@ -10,23 +10,23 @@ from geometry import *
 class BlockLeft(Node):
   def run(self):
     UTdebug.log(15, "Blocking left")
-#    print "Block Left"
-#    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
+    print "Block Left"
+    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
     return pose.ToPose(cfgpose.blockleft,2.0,100.0)
 class BlockRight(Node):
   def run(self):
-#    print "Block Right"
+    print "Block Right"
     UTdebug.log(15, "Blocking right")
-#    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
+    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
     return pose.ToPose(cfgpose.blockright,2.0,100.0)
 
 class BlockCenter(Node):
   def run(self):
     UTdebug.log(15, "Blocking right")
-#    print "Block Center"
-#    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
-#    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
-    return pose.ToPose(cfgpose.blockcenter,2.0,100.0)
+    print "Block Center"
+    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
+    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
+#    return pose.ToPose(cfgpose.blockcenter,2.0,100.0)
 
 class Blocker(Node):
  

@@ -68,13 +68,13 @@ void LocalizationModule::reInit() {
   pfilter_->init(Point2D(0,0), 0.0f);
   cache_.localization_mem->state = decltype(cache_.localization_mem->state)::Zero();
   cache_.localization_mem->covariance = decltype(cache_.localization_mem->covariance)::Identity();
-//  initBallFilter();
-//  last_seen_ball.x = 0;
-//  last_seen_ball.y = 0;
-//  frames_since_last_seen_ = SIGHT_THRESHOLD + 1;
+  initBallFilter();
+  last_seen_ball.x = 0;
+  last_seen_ball.y = 0;
+  frames_since_last_seen_ = SIGHT_THRESHOLD + 1;
 
 }
-/*
+
 // Initialize the ball filter
 void LocalizationModule::initBallFilter() {
   ball_filter_.x.setZero();
@@ -96,7 +96,7 @@ void LocalizationModule::initBallFilter() {
   r << 5.0, 5.0, 0.5, 0.5; // 0.3 0.3 0.3 0.3 
   ball_filter_.R = r.asDiagonal();
 }
-*/
+
 void LocalizationModule::moveBall(const Point2D& position) {
   // Optional: This method is called when the player is moved within the localization
   // simulator window.
@@ -108,13 +108,16 @@ void LocalizationModule::movePlayer(const Point2D& position, float orientation) 
 }
 
 void LocalizationModule::processFrame() {
+  auto& ball = cache_.world_object->objects_[WO_BALL];
   auto& self = cache_.world_object->objects_[cache_.robot_state->WO_SELF];
-/*
-  // Retrieve the robot's current location from localization memory
-  // and store it back into world objects
-  auto sloc = cache_.localization_mem->player;
-  self.loc = sloc;
-     
+
+  // Process the current frame and retrieve our location/orientation estimate
+  // from the particle filter
+  pfilter_->processFrame();
+  self.loc = pfilter_->pose().translation;
+  self.orientation = pfilter_->pose().rotation;
+  log(40, "Localization Update: x=%2.f, y=%2.f, theta=%2.2f", self.loc.x, self.loc.y, self.orientation * RAD_T_DEG);
+
   if(ball.seen) {
 
     // Compute the relative position of the ball from vision readings
@@ -191,11 +194,5 @@ void LocalizationModule::processFrame() {
   cache_.localization_mem->state[0] = ball.loc.x;
   cache_.localization_mem->state[1] = ball.loc.y;
   cache_.localization_mem->covariance = ball_filter_.P.topLeftCorner<2, 2>() * 10000;
-*/
-  // Process the current frame and retrieve our location/orientation estimate
-  // from the particle filter
-  pfilter_->processFrame();
-  self.loc = pfilter_->pose().translation;
-  self.orientation = pfilter_->pose().rotation;
-  log(40, "Localization Update: x=%2.f, y=%2.f, theta=%2.2f", self.loc.x, self.loc.y, self.orientation * RAD_T_DEG);
+
 }

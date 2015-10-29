@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Module.h>
+#include <localization/KalmanFilter.h>
 #include <memory/MemoryCache.h>
 #include <localization/LocalizationParams.h>
 
@@ -16,6 +17,7 @@ class LocalizationModule : public Module {
     void initSpecificModule();
     void initFromMemory();
     void initFromWorld();
+    void initBallFilter();
     void reInit();
     void processFrame();
 
@@ -24,10 +26,11 @@ class LocalizationModule : public Module {
     void moveBall(const Point2D& position);
     void movePlayer(const Point2D& position, float orientation);
   protected:
+    typedef KalmanFilter<4, 4> BallFilter;
     MemoryCache cache_;
     TextLogger*& tlogger_;
     LocalizationParams params_;
-//    BallFilter ball_filter_;
+    BallFilter ball_filter_;
     bool seen_last_frame_;
     Point2D last_seen_ball;
     int frames_since_last_seen_;
