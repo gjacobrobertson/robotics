@@ -304,7 +304,7 @@ class Playing(StateMachine):
     def __init__(self):
       Node.__init__(self)
       self.x = PID(0.6, 0.003, 0.001, 300)
-      self.y = PID(0.6, 0.005, 0.0, 180) # was 0.0005
+      self.y = PID(0.6, 0.003, 0.0, 180) # was 0.0005
       self.target_pos = None
       self.last_seen = 0
       self.kick_offset = 50
@@ -327,7 +327,7 @@ class Playing(StateMachine):
         if ball_x >= 100:
           xVel = self.x.update(ball_x)
         yVel = 0.0
-        if abs(ball_y - self.kick_offset) <= 30:
+        if abs(ball_y - self.kick_offset) >= 30:
           yVel = self.y.update(ball_y - self.kick_offset)
         tVel = (ball.visionBearing - self.initialTheta) / 0.87
 
