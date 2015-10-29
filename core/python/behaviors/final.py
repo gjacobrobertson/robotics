@@ -60,7 +60,7 @@ class Blocker(Node):
     self.time0 = self.getTime()
     self.direction = 1
     self.started = False
-    self.delay = 10.0
+    self.delay = 5.0
 
   def run(self):
     if self.getTime() > self.delay:
@@ -182,7 +182,7 @@ class Set(LoopingStateMachine):
     blocks = {
       "left": BlockLeft(),
       "right": BlockRight(),
-      "center": pose.Squat() #ToPose(cfgpose.sittingPoseV3,0.5) #Squat()#BlockCenter()
+      "center": pose.ToPose(cfgpose.sittingPoseV3,0.5) #Squat()#BlockCenter()
     }
     reset = Reset()
     self.trans(init,T(20),blocker)
@@ -268,9 +268,9 @@ class Playing(StateMachine):
       Node.__init__(self)
       self.finishCt = 0
       selfRobot = world_objects.getObjPtr(robot_state.WO_SELF)
-      self.direction = 1
+      self.direction = -1
       if selfRobot.loc.y > 0:
-        self.direction = -1
+        self.direction = 1
 
 
     def run(self):
@@ -333,9 +333,9 @@ class Playing(StateMachine):
 
         xVel = max(min(xVel,0.5),-0.5)
         yVel = max(min(yVel,1.0),-1.0)
-        tVel = 0#max(min(tVel,0.3),-0.3)
+        tVel = 0#max(min(yVel,0.1),-0.1)
 
-        if tVel * yVel > 0:
+        if tVel * yVel < 0:
           tVel = tVel * -1
 
         print "Final: {0}, {1}, {2} --> Walk Velocity: {3}, {4}, {5}".format(ball_x, ball_y - self.kick_offset, ball.visionBearing - self.initialTheta, xVel, yVel, tVel)
@@ -388,8 +388,8 @@ class Playing(StateMachine):
     dribble = self.Dribble()
     #self.trans(self.Stand(), C, self.Approach(), C, self.Stand(), C, self.Rotate(), C, self.Stand(), C, self.FinalApproach(), C, self.Stand(), C, self.Kick(), C, pose.Sit(), C, self.Off())
     self.trans(self.Stand(), C, approach)
-    self.trans(approach, C, self.Stand(), C, rotate)
-    self.trans(rotate, C, self.Stand(), C, final)
+    self.trans(approach, C, rotate)
+    self.trans(rotate, C, final)
     self.trans(final, S("kick"), self.Stand(), C, kick)
     self.trans(final, S("dribble"), dribble, C, approach)#self.Stand())
 #    self.trans(dribble, C, approach)

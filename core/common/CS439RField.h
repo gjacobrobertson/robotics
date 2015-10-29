@@ -65,11 +65,11 @@ const Point2D landmarkLocation[] = {
   Point2D(0, 0),  // center circle
 
   Point2D(HALF_FIELD_X, HALF_FIELD_Y),       //  WO_BEACON_BLUE_YELLOW
-  Point2D(HALF_FIELD_X*100, HALF_FIELD_Y*100),      //  WO_BEACON_YELLOW_BLUE, NOT USED
-  Point2D(HALF_FIELD_X*100, HALF_FIELD_Y*100),                  //  WO_BEACON_BLUE_PINK, NOT USED
+  Point2D(HALF_FIELD_X, HALF_FIELD_Y),      //  WO_BEACON_YELLOW_BLUE, NOT USED
+  Point2D(-HALF_FIELD_X + 1500,  -HALF_FIELD_Y ),                  //  WO_BEACON_BLUE_PINK, NOT USED
   Point2D(-HALF_FIELD_X + 1500,  -HALF_FIELD_Y ),                  //  WO_BEACON_PINK_BLUE
   Point2D(-HALF_FIELD_X + 1000, HALF_FIELD_Y),      //  WO_BEACON_PINK_YELLOW
-  Point2D(HALF_FIELD_X*100, HALF_FIELD_Y*100),     //  WO_BEACON_YELLOW_PINK, NOT USED
+  Point2D(-HALF_FIELD_X + 1000, HALF_FIELD_Y),     //  WO_BEACON_YELLOW_PINK, NOT USED
 
   Point2D( -HALF_FIELD_X, 0),                 // WO_OWN_GOAL
   Point2D( FIELD_X / 2, 0 ),                 // WO_OPP_GOAL
