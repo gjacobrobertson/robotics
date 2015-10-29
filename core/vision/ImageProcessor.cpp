@@ -112,16 +112,19 @@ void ImageProcessor::processFrame(){
   if(!classifier_->classifyImage(color_table_)) return;
   getBlobNodes();
   detectBall();
-  //getBestGoalCandidate();
+  beacon_detector_->findBeacons(colorDisjointSets,this);
+  detectGoal();//getBestGoalCandidate();
  
- beacon_detector_->findBeacons(colorDisjointSets, this);
+// beacon_detector_->findBeacons(colorDisjointSets, this);
 }
 
 void ImageProcessor::detectBall() {
 
+  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
+  if (camera_ == Camera::TOP and ball->seen) return;
+
   BallCandidate* ballCandidate = getBestBallCandidate();
   if(!ballCandidate) return; // function defined elsewhere that fills in imageX, imageY by reference
-  WorldObject* ball = &vblocks_.world_object->objects_[WO_BALL];
 
 
   int imageX = ballCandidate->centerX;
@@ -325,7 +328,7 @@ BallCandidate* ImageProcessor::getBestBallCandidate() {
     // Position p = cmatrix_.getWorldPosition((*ball)->centerX, (*ball)->centerY, (*ball)->height); 
     Position q = cmatrix_.getWorldPosition((*ball)->centerX, (*ball)->centerY, 32.5);
     
-    if(camera_ == Camera::TOP) {
+    if(camera_ == Camera::TOP || camera_ == Camera::BOTTOM) {
       float h = cmatrix_.groundDistance(q);
 //      float g = cmatrix_.groundDistance(p);
 //      if (abs(((*ball)->width / 2) - (cmatrix_.getCameraWidthByDistance(g, 65)/2)) < 2 && abs(((*ball)->height / 2) - (cmatrix_.getCameraHeightByDistance(g, 65)/2)) < 2) {
@@ -358,7 +361,7 @@ bool ImageProcessor::goalAspectRatioTest(struct TreeNode * node){
   float height = node->bottomright->y - node->topleft->y;
   float width = node->bottomright->x - node->topleft->x;  
   float ratio = width/height; 
-  return (ratio>=1.1 && ratio<=3.0);
+  return (ratio>=0.8 && ratio<=4.0); // 1.1 3.0
 }
 
 std::vector<TreeNode*> ImageProcessor::getGoalCandidates() {
@@ -370,8 +373,8 @@ std::vector<TreeNode*> ImageProcessor::getGoalCandidates() {
     float height = (*treeNode)->bottomright->y - (*treeNode)->topleft->y;
     float area = width * height;
     float numberPixels = (*treeNode)->numberOfPixels;
-
-    if((width>=5) && (height>=5) && ((numberPixels/area) > .6) && (numberPixels > 1100)){
+//    std::cout << width << " " << height << " " << area << " " << numberPixels << std::endl;
+    if((width>=5) && (height>=5) && ((numberPixels/area) > 0.25) && (numberPixels > 1300)){//1100)){
       goalNodes.push_back(*treeNode);
     }  
   }
@@ -382,10 +385,12 @@ std::vector<TreeNode*> ImageProcessor::getGoalCandidates() {
 struct TreeNode* ImageProcessor::getBestGoalCandidate(){
     
   std::vector<struct TreeNode *> goals = getGoalCandidates();
+//  std::cout << goals.size() << std::endl;
   for(std::vector<struct TreeNode *>::iterator goal = goals.begin(); goal != goals.end(); ++goal){
   
     // (height - cmatrix_.getCameraHeightByDistance(g, 410) > -3) && (height - cmatrix_.getCameraHeightByDistance(g, 900) < 3) &&
     if (goalAspectRatioTest(*goal)) {
+//      std::cout << "Found goal!" << std::endl;
       return *goal;
     }
   }

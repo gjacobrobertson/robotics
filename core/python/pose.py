@@ -167,7 +167,7 @@ class StandStraight(Task):
 
 class Squat(Task):
   def __init__(self, time = 3.0):
-    super(Squat, self).__init__(self, time=time)
+    super(Squat, self).__init__(time=time)
     self.setChain([ 
       PoseSequence(
         cfgpose.goalieSquatPart1, 0.4,
@@ -187,7 +187,7 @@ class BlockRight(Task):
   def __init__(self, time = 3.0):
     super(BlockRight, self).__init__(time=time)
     self.setSubtask(PoseSequence(
-      cfgpose.blockright, 1.0,
+      cfgpose.blockright, 0.5,
       cfgpose.blockright, self.time, 
       cfgpose.sittingPoseNoArms, 2.0,
       cfgpose.standingPose, 2.0
@@ -197,7 +197,7 @@ class BlockLeft(Task):
   def __init__(self, time = 3.0):
     super(BlockLeft, self).__init__(time=time)
     self.setSubtask(PoseSequence(
-      cfgpose.blockleft, 1.0,
+      cfgpose.blockleft, 0.5,
       cfgpose.blockleft, self.time, 
       cfgpose.sittingPoseNoArms, 2.0,
       cfgpose.standingPose, 2.0

@@ -69,6 +69,8 @@ vector<int> BeaconDetector::findColoredBeacon(Color color1, Color color2, std::m
          box.push_back((*colorDisjointSet1)->topleft->y);
          box.push_back(std::max((*colorDisjointSet1)->bottomright->x, (*colorDisjointSet2)->bottomright->x));
          box.push_back((*colorDisjointSet2)->bottomright->y);
+//         colorDisjointSets[color2].rootSet.erase(*colorDisjointSet2);
+//         colorDisjointSets[color1].rootSet.erase(*colorDisjointSet1);
          return box;
       }
     }
