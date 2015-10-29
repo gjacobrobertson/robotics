@@ -159,29 +159,30 @@ Particle ParticleFilter::sample(double seed)
 
 double ParticleFilter::get_weight(Particle p) {
   double weight = 1;
-  vector<WorldObjectType> beacon_types{WO_BEACON_BLUE_YELLOW,
+  vector<WorldObjectType> landmark_types{WO_BEACON_BLUE_YELLOW,
                             WO_BEACON_YELLOW_BLUE,
                             WO_BEACON_BLUE_PINK,
                             WO_BEACON_PINK_BLUE,
                             WO_BEACON_PINK_YELLOW,
-                            WO_BEACON_YELLOW_PINK};
-  for(auto &beacon_type : beacon_types) {
-    auto& beacon = cache_.world_object->objects_[beacon_type];
-    if (beacon.seen) {
+                            WO_BEACON_YELLOW_PINK,
+                            WO_UNKNOWN_GOAL};
+  for(auto &landmark_type : landmark_types) {
+    auto& landmark = cache_.world_object->objects_[landmark_type];
+    if (landmark.seen) {
       log(42, "Weighting particle: (%f, %f, %f)", p.x, p.y, p.t);
       Point2D point(p.x, p.y);
       Eigen::Vector2d mu;
-      mu << point.getDistanceTo(beacon.loc), 
-            point.getBearingTo(beacon.loc, p.t);
-      log(42, "Expected beacon: (%f, %f)", mu[0], mu[1]);
+      mu << point.getDistanceTo(landmark.loc), 
+            point.getBearingTo(landmark.loc, p.t);
+      log(42, "Expected landmark: (%f, %f)", mu[0], mu[1]);
 
       Eigen::Matrix2d sigma;
       sigma << pow(200, 2), 0, 
                0 , pow(M_PI/32, 2);
 
       Eigen::Vector2d x;
-      x << beacon.visionDistance, beacon.visionBearing;      
-      log(42, "Observed beacon: (%f, %f)", x[0], x[1]);
+      x << landmark.visionDistance, landmark.visionBearing;      
+      log(42, "Observed landmark: (%f, %f)", x[0], x[1]);
 
       weight *= mvgauss<2>(mu, sigma, x);
       log(42, "Assigning weight: %f", weight);

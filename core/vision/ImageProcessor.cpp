@@ -354,12 +354,6 @@ struct TreeNode* ImageProcessor::getBestGoalCandidate(){
     
   std::vector<struct TreeNode *> goals = getGoalCandidates();
   for(std::vector<struct TreeNode *>::iterator goal = goals.begin(); goal != goals.end(); ++goal){
-    float width = (*goal)->bottomright->x - (*goal)->topleft->x;
-    float height = (*goal)->bottomright->y - (*goal)->topleft->y;
-    float centerX = (*goal)->topleft->x + (width/2);
-    float centerY = (*goal)->topleft->y + (height/2);
-    Position p = cmatrix_.getWorldPosition(centerX, centerY, height);
-    float g = cmatrix_.groundDistance(p);
   
     // (height - cmatrix_.getCameraHeightByDistance(g, 410) > -3) && (height - cmatrix_.getCameraHeightByDistance(g, 900) < 3) &&
     if (goalAspectRatioTest(*goal)) {
@@ -370,6 +364,27 @@ struct TreeNode* ImageProcessor::getBestGoalCandidate(){
 }
 
 
+void ImageProcessor::detectGoal() {
+
+  TreeNode* goalCandidate = getBestGoalCandidate();
+  if(!goalCandidate) return; // function defined elsewhere that fills in imageX, imageY by reference
+  WorldObject* goal = &vblocks_.world_object->objects_[WO_OWN_GOAL];
+
+
+  float width = goalCandidate->bottomright->x - goalCandidate->topleft->x;
+  float height = goalCandidate->bottomright->y - goalCandidate->topleft->y;
+  float centerX = goalCandidate->topleft->x + (width/2);
+  float centerY = (goalCandidate)->topleft->y + (height/2);
+
+  goal->imageCenterX = centerX;
+  goal->imageCenterY = centerY;
+
+  Position p = cmatrix_.getWorldPosition(centerX, centerY, GOAL_HEIGHT / 2.0);
+  goal->visionBearing = cmatrix_.bearing(p);
+  goal->visionDistance = cmatrix_.groundDistance(p);
+
+  goal->seen = true;
+}
 void ImageProcessor::enableCalibration(bool value) {
   enableCalibration_ = value;
 }
