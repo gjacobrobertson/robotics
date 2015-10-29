@@ -343,7 +343,7 @@ BallCandidate* ImageProcessor::getBestBallCandidate() {
         margin = area;//currentMargin;
       }
     } else {
-      std::cout << (*ball)-> width << endl;      
+//      std::cout << (*ball)-> width << endl;      
       if (((*ball)->width < 65) && ((*ball)->width > 30) && ((*ball)->height < 65) && ((*ball)->height > 30)) {
         return *ball;
       } 

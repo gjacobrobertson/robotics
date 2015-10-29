@@ -165,7 +165,7 @@ double ParticleFilter::get_weight(Particle p) {
                             WO_BEACON_PINK_BLUE,
                             WO_BEACON_PINK_YELLOW,
                             WO_BEACON_YELLOW_PINK,
-                            WO_UNKNOWN_GOAL};
+                            WO_OWN_GOAL};
   for(auto &landmark_type : landmark_types) {
     auto& landmark = cache_.world_object->objects_[landmark_type];
     if (landmark.seen) {

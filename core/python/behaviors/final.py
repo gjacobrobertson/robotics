@@ -14,25 +14,25 @@ class BlockLeft(Node):
   def run(self):
     UTdebug.log(15, "Blocking left")
     print "Block Left"
-    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
-#    return pose.BlockLeft(2.0) #
-    return pose.ToPose(cfgpose.blockleft,2.0,100.0)
+#    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
+    return pose.BlockLeft(2.0) 
+#    return pose.ToPose(cfgpose.blockleft,2.0,100.0)
 class BlockRight(Node):
   def run(self):
     print "Block Right"
     UTdebug.log(15, "Blocking right")
-    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
-#    return pose.BlockRight(2.0) #
-    return pose.ToPose(cfgpose.blockright,2.0,100.0)
+#    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
+    return pose.BlockRight(2.0) #
+#    return pose.ToPose(cfgpose.blockright,2.0,100.0)
 
 class BlockCenter(Node):
   def run(self):
     UTdebug.log(15, "Blocking right")
     print "Block Center"
-    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
-    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
-#    return pose.Squat(2.0) #
-    return pose.ToPose(cfgpose.blockcenter,2.0,100.0)
+#    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
+#    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
+    return pose.Squat() 
+#    return pose.ToPose(cfgpose.blockcenter,2.0,100.0)
 
 class Blocker(Node):
 
@@ -42,8 +42,8 @@ class Blocker(Node):
     self.blockCt = 0
 
   def run(self):
-    commands.setStiffness()
-#    commands.stand()
+#    commands.setStiffness()
+    commands.stand()
     ball = mem_objects.world_objects[core.WO_BALL]
     selfRobot = mem_objects.world_objects[core.WO_TEAM5]
     relBall = ball.loc.globalToRelative(selfRobot.loc, selfRobot.orientation)
@@ -60,8 +60,7 @@ class Blocker(Node):
     eta = float('inf')
 #    print "Ball {6}: {0}, {1} Velocity: {2}, {3} Vision: {4} {5}".format(relBall.x, relBall.y, ball.absVel.x, ball.absVel.y, ball.visionDistance, ball.visionBearing*core.RAD_T_DEG, ball.seen)
     if ball.absVel.x < 0:
-#      eta = -1.0 * (ball.loc.x + 1000) / ball.absVel.x
-      eta = -1.0 * relBall.x / ball.absVel.x
+      eta = -1.0 * relBall.x / ball.relVel.x
     #if abs(ball.loc.x / ball.relVel.x) < 3.0 and ball.relVel.x < 0: # Ball will reach us in 3 seconds
     if eta < 10 and relBall.x < 1000 and eta > 3:
 #      intercept = ball.loc.y + (ball.absVel.y * eta)
@@ -85,17 +84,57 @@ class Blocker(Node):
           self.postSignal(choice)
       else:
         self.blockCt = max(self.blockCt - 1, 0)
+    else:
+      target_pos = self.get_target_position(ball)
+      self.move_to_position(*target_pos)
+
+  # Point in goalie box on intercept  between goal and ball.
+  # Given in absolute coordinates
+  def get_target_position(self, ball):
+      goal = world_objects.getObjPtr(core.WO_OWN_GOAL)
+      target_x = -425
+      y_bound = 500
+      m = (ball.loc.y - goal.loc.y) / (ball.loc.x + goal.loc.x)
+      b = goal.loc.y - m* goal.loc.x
+     
+      target_y = m * target_x + b
+      target_y = min(target_y, y_bound)
+      target_y = max(target_y, y_bound * -1.0)
+
+      return (target_x, target_y)
+
+  def move_to_position(self, target_x, target_y):
+    robot = world_objects.getObjPtr(robot_state.WO_SELF);
+    xVel = 0.0
+    yVel = 0.0
+    tVel = 0.0
+
+    #Adjust angle
+    angleToTarget = robot.orientation * -1.0
+    if abs(angleToTarget) > 15 * core.DEG_T_RAD:
+      tVel = 0.25 * (angleToTarget / abs(angleToTarget))
+      
+    xToTarget = target_x - robot.loc.x
+    if abs(xToTarget) > 100:
+      xVel = 0.25 * (xToTarget / abs(xToTarget))
+
+    yToTarget = target_y - robot.loc.y
+    if abs(yToTarget) > 100:
+      yVel = 0.25 * (yToTarget / abs(yToTarget))
+
+    commands.setWalkVelocity(xVel, yVel, tVel)
 
 class Reset(Node):
     def run(self):
-      return pose.ToPose(cfgpose.sittingPoseV3,2.0)
+      commands.stand()
+#      return pose.ToPose(cfgpose.sittingPoseV3,2.0)
 
 class Set(LoopingStateMachine):
   def setup(self):
     blocker = Blocker()
     blocks = {
-      "left": BlockLeft(),
-      "right": BlockRight(),
+      "left": pose.BlockLeft(),
+      "right": pose.BlockRight(),
       "center": BlockCenter()
     }
     reset = Reset()
