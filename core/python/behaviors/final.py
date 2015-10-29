@@ -13,23 +13,26 @@ from geometry import *
 class BlockLeft(Node):
   def run(self):
     UTdebug.log(15, "Blocking left")
-#    print "Block Left"
-#    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
-    return pose.BlockLeft(2.0) #ToPose(cfgpose.blockleft,2.0,100.0)
+    print "Block Left"
+    joint_commands.setJointCommandDeg(core.LShoulderRoll, 90.0)
+#    return pose.BlockLeft(2.0) #
+    return pose.ToPose(cfgpose.blockleft,2.0,100.0)
 class BlockRight(Node):
   def run(self):
-#    print "Block Right"
+    print "Block Right"
     UTdebug.log(15, "Blocking right")
-#    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
-    return pose.BlockRight(2.0) #pose.ToPose(cfgpose.blockright,2.0,100.0)
+    joint_commands.setJointCommandDeg(core.RShoulderRoll, -90.0)
+#    return pose.BlockRight(2.0) #
+    return pose.ToPose(cfgpose.blockright,2.0,100.0)
 
 class BlockCenter(Node):
   def run(self):
     UTdebug.log(15, "Blocking right")
-#    print "Block Center"
-#    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
-#    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
-    return pose.Squat(2.0) #ToPose(cfgpose.blockcenter,2.0,100.0)
+    print "Block Center"
+    joint_commands.setJointCommand(core.RShoulderPitch,0.0)
+    joint_commands.setJointCommand(core.LShoulderPitch,0.0)
+#    return pose.Squat(2.0) #
+    return pose.ToPose(cfgpose.blockcenter,2.0,100.0)
 
 class Blocker(Node):
 
@@ -39,23 +42,23 @@ class Blocker(Node):
     self.blockCt = 0
 
   def run(self):
-#    commands.setStiffness()
-    commands.stand()
+    commands.setStiffness()
+#    commands.stand()
     ball = mem_objects.world_objects[core.WO_BALL]
     selfRobot = mem_objects.world_objects[core.WO_TEAM5]
     relBall = ball.loc.globalToRelative(selfRobot.loc, selfRobot.orientation)
 
     if ball.seen:
-      commands.setHeadPan(ball.bearing, 0.1)
-      self.lastSeenCt = 0
+#      commands.setHeadPan(ball.bearing, 0.1)
+      self.lastSeenCt = max(0,self.lastSeenCt - 1)
     else:
       self.lastSeenCt += 1
 
-    if self.lastSeenCt > 120:
-      commands.setHeadPan(0,0.1)
+#    if self.lastSeenCt > 120:
+#      commands.setHeadPan(0,0.1)
 
     eta = float('inf')
-    print "Ball: {0}, {1} Velocity: {2}, {3} Vision: {4} {5}".format(relBall.x, relBall.y, ball.absVel.x, ball.absVel.y, ball.visionDistance, ball.visionBearing*core.RAD_T_DEG)
+#    print "Ball {6}: {0}, {1} Velocity: {2}, {3} Vision: {4} {5}".format(relBall.x, relBall.y, ball.absVel.x, ball.absVel.y, ball.visionDistance, ball.visionBearing*core.RAD_T_DEG, ball.seen)
     if ball.absVel.x < 0:
 #      eta = -1.0 * (ball.loc.x + 1000) / ball.absVel.x
       eta = -1.0 * relBall.x / ball.absVel.x
@@ -69,16 +72,17 @@ class Blocker(Node):
       print ball.absVel
 #      print ball.relVel
       print intercept
-      if intercept < 500 and intercept > -500 and self.blockCt > 5:
+      if intercept < 500 and intercept > -500:
         self.blockCt += 1
-        UTdebug.log(15, "Ball is close, blocking!")
-        if intercept > 120:
-          choice = "left"
-        elif intercept < -120:
-          choice = "right"
-        else:
-          choice = "center"
-        self.postSignal(choice)
+        if self.blockCt > 1:
+          UTdebug.log(15, "Ball is close, blocking!")
+          if intercept > 120:
+            choice = "left"
+          elif intercept < -120:
+            choice = "right"
+          else:
+            choice = "center"
+          self.postSignal(choice)
       else:
         self.blockCt = max(self.blockCt - 1, 0)
 
@@ -272,6 +276,7 @@ class Playing(StateMachine):
     final = self.FinalApproach()
     kick = self.Kick()
     close = self.LinedUp()
+    dribble = self.Dribble()
     #self.trans(self.Stand(), C, self.Approach(), C, self.Stand(), C, self.Rotate(), C, self.Stand(), C, self.FinalApproach(), C, self.Stand(), C, self.Kick(), C, pose.Sit(), C, self.Off())
     self.trans(self.Stand(), C, approach)
     self.trans(approach, C, self.Stand(), C, rotate)

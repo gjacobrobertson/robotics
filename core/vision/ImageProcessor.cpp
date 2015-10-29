@@ -112,7 +112,7 @@ void ImageProcessor::processFrame(){
   if(!classifier_->classifyImage(color_table_)) return;
   getBlobNodes();
   detectBall();
-  getBestGoalCandidate();
+  //getBestGoalCandidate();
  
  beacon_detector_->findBeacons(colorDisjointSets, this);
 }
@@ -133,8 +133,9 @@ void ImageProcessor::detectBall() {
   Position p = cmatrix_.getWorldPosition(imageX, imageY);
   ball->visionBearing = cmatrix_.bearing(p);
   ball->visionElevation = cmatrix_.elevation(p);
-  ball->visionDistance = cmatrix_.groundDistance(p);
+  ball->visionDistance = 0.611 * cmatrix_.groundDistance(p) + 2;
 
+  ball->fromTopCamera = (camera_ == Camera::TOP);
   ball->seen = true;
 }
 
@@ -240,23 +241,43 @@ bool ImageProcessor::isSquare(struct TreeNode * treeNode){
   float width = (treeNode)->bottomright->x - (treeNode)->topleft->x;
   float height = (treeNode)->bottomright->y - (treeNode)->topleft->y;
   float ratio = abs((width-height)/(width+height));
-  return (ratio<=0.3);    
+  if (ratio<=0.3)
+    return true;
+  else {
+//    std::cout << "isSquare!" << std::endl;
+    return true;
+  }
 }
 
 bool ImageProcessor::isAtleastMinimumSize(struct TreeNode * treeNode){
   float width = (treeNode)->bottomright->x - (treeNode)->topleft->x;
   float height = (treeNode)->bottomright->y - (treeNode)->topleft->y;
-  return ((width>=5)&&(height>=5));
+  if ((width>=5)&&(height>=5))
+    return true;
+  else {
+//    std::cout << "not min size!" << std::endl;
+    return true;
+  }
 }
 
 bool ImageProcessor::hasBallAspectRatio(struct TreeNode * treeNode) {
   float width = (treeNode)->bottomright->x - (treeNode)->topleft->x;
   float height = (treeNode)->bottomright->y - (treeNode)->topleft->y;
-  return (abs((width/height)-1) < 0.3);
+  if (abs((width/height)-1) < 0.4)
+    return true;
+  else {
+//    std::cout << "Wrong aspect ratio!" << std::endl;
+    return true;
+  }
 }
 
 bool ImageProcessor::hasMinimumArea(struct TreeNode * treeNode){
-  return (treeNode->numberOfPixels > 24);
+  if (treeNode->numberOfPixels > 24)
+    return true;
+  else {
+//    std::cout << "Need more area!" << std::endl;
+    return false;
+  }
 }
 
 bool ImageProcessor::isCircularArea(struct TreeNode * treeNode){
@@ -264,7 +285,12 @@ bool ImageProcessor::isCircularArea(struct TreeNode * treeNode){
   float width = (treeNode)->bottomright->x - (treeNode)->topleft->x;
   float height = (treeNode)->bottomright->y - (treeNode)->topleft->y;
   float expectedArea = width * height;
-  return (treeNode->numberOfPixels / expectedArea) > .7;
+  if ((treeNode->numberOfPixels / expectedArea) > .7)
+    return true;
+  else {
+//    std::cout << "Not circular" << std::endl;
+    return true;
+  }
 }
 std::vector<BallCandidate*> ImageProcessor::getBallCandidates() {
   
@@ -274,7 +300,8 @@ std::vector<BallCandidate*> ImageProcessor::getBallCandidates() {
     float width = (*treeNode)->bottomright->x - (*treeNode)->topleft->x;
     float height = (*treeNode)->bottomright->y - (*treeNode)->topleft->y;
     float ratio = abs((width-height)/(width+height));
-    if(isSquare(*treeNode) && (isAtleastMinimumSize(*treeNode)) && isCircularArea(*treeNode) && hasMinimumArea(*treeNode) && hasBallAspectRatio(*treeNode)){
+    //if(isSquare(*treeNode) && 
+    if ((isAtleastMinimumSize(*treeNode)) && isCircularArea(*treeNode) && hasMinimumArea(*treeNode) && hasBallAspectRatio(*treeNode)){
       struct BallCandidate* ball = new BallCandidate();
       ball->width = width;
       ball->height = height;
@@ -292,7 +319,7 @@ BallCandidate* ImageProcessor::getBestBallCandidate() {
   
   // TODO(ankitade): choose most appropriate one instead of best.  
   std::vector<struct BallCandidate*> balls = getBallCandidates();
-  float margin = 100000.0;
+  float margin = 0;//100000.0;
   BallCandidate* candidate = NULL;
   for(std::vector<struct BallCandidate*>::iterator ball = balls.begin(); ball != balls.end(); ++ball) {
     // Position p = cmatrix_.getWorldPosition((*ball)->centerX, (*ball)->centerY, (*ball)->height); 
@@ -309,18 +336,20 @@ BallCandidate* ImageProcessor::getBestBallCandidate() {
       float expectedValue = (*ball)->width > (*ball)->height ? calculatedCameraWidth : calculatedCameraHeight;
       float actualValue = (*ball)->width > (*ball)->height ? (*ball)->width : (*ball)->height;
 //      std::cout << "Values " << expectedValue << " " << actualValue << endl;
-      float currentMargin = abs(expectedValue - actualValue);      
-      if (currentMargin < 4 && currentMargin < margin) {        
+      float currentMargin = abs(expectedValue - actualValue);
+      float area = (*ball)->width * (*ball)->height;
+      if (area > margin){//currentMargin < 4 && currentMargin < margin) {        
         candidate = *ball;
-        margin = currentMargin;
+        margin = area;//currentMargin;
       }
     } else {
-//      std::cout << (*ball)-> width << endl;      
+      std::cout << (*ball)-> width << endl;      
       if (((*ball)->width < 65) && ((*ball)->width > 30) && ((*ball)->height < 65) && ((*ball)->height > 30)) {
         return *ball;
       } 
     }
   }
+//  std::cout << (candidate == NULL) << std::endl;
   return candidate;
 }
 
