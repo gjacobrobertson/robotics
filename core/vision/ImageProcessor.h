@@ -12,8 +12,7 @@
 #include <common/RobotCalibration.h>
 #include <vision/structures/BallCandidate.h>
 #include <math/Pose3D.h>
-
-class BeaconDetector;
+#include <vision/OpticalFlowEstimator.h>
 
 /// @ingroup vision
 class ImageProcessor {
@@ -40,6 +39,8 @@ class ImageProcessor {
     bool isImageLoaded();
     void detectBall();
     void findBall(int& imageX, int& imageY);
+    std::vector<cv::Point2f> getPrevCorners() { return flowEstimator_->getPrevCorners(); }
+    std::vector<cv::Point2f> getNextCorners() { return flowEstimator_->getNextCorners(); }
   private:
     int getTeamColor();
     double getCurrentTime();
@@ -59,7 +60,7 @@ class ImageProcessor {
 
     RobotCalibration* calibration_;
     bool enableCalibration_;
-    BeaconDetector* beacon_detector_;
+    OpticalFlowEstimator* flowEstimator_;
 };
 
 #endif
