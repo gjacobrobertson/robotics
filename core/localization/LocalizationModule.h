@@ -3,8 +3,8 @@
 #include <Module.h>
 #include <memory/MemoryCache.h>
 #include <localization/LocalizationParams.h>
+#include <localization/OdometryFilter.h>
 
-class ParticleFilter;
 class Point2D;
 
 class LocalizationModule : public Module {
@@ -27,5 +27,5 @@ class LocalizationModule : public Module {
     MemoryCache cache_;
     TextLogger*& tlogger_;
     LocalizationParams params_;
-    ParticleFilter* pfilter_;
+    OdometryFilter* ofilter_;
 };

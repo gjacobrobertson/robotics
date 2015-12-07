@@ -8,6 +8,7 @@
 #include <vision/structures/HorizonLine.h>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <vision/enums/Colors.h>
+#include <opencv2/core/core.hpp>
 #define MAX_VISION_OPPS 10
 
 struct RobotVisionBlock : public MemoryBlock {
@@ -60,6 +61,8 @@ public:
   Point2D bodyPointsImage[NUM_VISION_BODY_POINTS];
   HorizonLine horizon;
 
+  std::vector<cv::Point2f> corners;
+  std::vector<cv::Point2f> prevCorners;
 };
 
 #endif
