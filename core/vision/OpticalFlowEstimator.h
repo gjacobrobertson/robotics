@@ -35,5 +35,5 @@ class OpticalFlowEstimator {
     vector<float> error_;
 
     cv::Mat getImg();
-    void filterCorners(vector<cv::Point2f>&);
+    vector<cv::Point2f> filterCorners(vector<cv::Point2f>&);
 };

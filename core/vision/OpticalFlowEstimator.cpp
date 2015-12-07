@@ -35,8 +35,8 @@ void OpticalFlowEstimator::estimateFlow() {
   if (prevCorners_.size() == 0) return;
 
   cv::calcOpticalFlowPyrLK(prevImg_, nextImg_, prevCorners_, nextCorners_, status_, error_);
-  filterCorners(prevCorners_);
-  filterCorners(nextCorners_);
+  prevCorners_ = filterCorners(prevCorners_);
+  nextCorners_ = filterCorners(nextCorners_);
 }
 
 cv::Mat OpticalFlowEstimator::getImg() {
@@ -54,7 +54,7 @@ cv::Mat OpticalFlowEstimator::getImg() {
   return grayImage;
 }
 
-void OpticalFlowEstimator::filterCorners(vector<cv::Point2f>& corners) {
+vector<cv::Point2f> OpticalFlowEstimator::filterCorners(vector<cv::Point2f>& corners) {
   vector<cv::Point2f> filtered;
   for (vector<cv::Point2f>::size_type i = 0; i<corners.size();i++)
   {
@@ -62,5 +62,5 @@ void OpticalFlowEstimator::filterCorners(vector<cv::Point2f>& corners) {
       filtered.push_back(corners[i]);
     }
   }
-  corners = filtered;
+  return filtered;
 }

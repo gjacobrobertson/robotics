@@ -225,16 +225,14 @@ void VisionWindow::drawSegmentedImage(ImageWidget *image) {
 void VisionWindow::drawCorners(ImageWidget* image) {
   QPainter painter(image->getImage());
   painter.setPen(QPen(QColor(255, 0, 0), 1));
-  if(IS_RUNNING_CORE) {
-    ImageProcessor* processor = getImageProcessor(image);
-    vector<cv::Point2f> prevCorners = processor->getPrevCorners();
-    vector<cv::Point2f> nextCorners = processor->getNextCorners();
-    for(vector<cv::Point2f>::size_type i=0;i<prevCorners.size();i++) {
-      cv::Point2f prev = prevCorners[i];
-      cv::Point2f next = nextCorners[i];
-      painter.drawLine(prev.x, prev.y, next.x, next.y);
-      painter.drawEllipse(QPointF(next.x, next.y), 5, 5);
-    }
+  ImageProcessor* processor = getImageProcessor(image);
+  vector<cv::Point2f> prevCorners = processor->getPrevCorners();
+  vector<cv::Point2f> nextCorners = processor->getNextCorners();
+  for(vector<cv::Point2f>::size_type i=0;i<prevCorners.size();i++) {
+    cv::Point2f prev = prevCorners[i];
+    cv::Point2f next = nextCorners[i];
+    painter.drawLine(prev.x, prev.y, next.x, next.y);
+    painter.drawEllipse(QPointF(next.x, next.y), 5, 5);
   }
 }
 

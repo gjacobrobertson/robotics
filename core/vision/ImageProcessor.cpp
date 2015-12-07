@@ -109,9 +109,11 @@ void ImageProcessor::processFrame(){
   vblocks_.robot_vision->horizon = horizon;
   visionLog(30, "Classifying Image", camera_);
   if(!classifier_->classifyImage(color_table_)) return;
-  visionLog(30, "Estimating Optical Flow", camera_);
-  //flowEstimator_->estimateFlow();
-  flowEstimator_->estimateFlow();
+  if(camera_ == Camera::TOP)
+  {
+    visionLog(30, "Estimating Optical Flow", camera_);
+    flowEstimator_->estimateFlow();
+  }
 }
 
 int ImageProcessor::getTeamColor() {
